@@ -1,48 +1,66 @@
-import { MailService } from '@sendgrid/mail';
+import AWS from 'aws-sdk';
 import { log } from './vite';
 
-// Initialize SendGrid mail service
-const mailService = new MailService();
+// Initialize AWS SES service
+const sesConfig = {
+  accessKeyId: process.env.SES_USERNAME,
+  secretAccessKey: process.env.SES_PASSWORD,
+  region: 'ap-south-1', // Extracted from the host endpoint
+};
 
-// Check for API key and set it if available
-if (process.env.SENDGRID_API_KEY) {
-  mailService.setApiKey(process.env.SENDGRID_API_KEY);
-  log('SendGrid API key configured', 'email');
+// Initialize the SES object
+const ses = new AWS.SES(sesConfig);
+
+// Check if SES credentials are configured
+if (process.env.SES_USERNAME && process.env.SES_PASSWORD) {
+  log('AWS SES credentials configured', 'email');
 } else {
-  log('SendGrid API key not found. Email functionality is disabled.', 'email');
+  log('AWS SES credentials not found. Email functionality is disabled.', 'email');
 }
 
 export interface EmailParams {
   to: string;
-  from: string;
+  from?: string;
   subject: string;
   text?: string;
   html?: string;
 }
 
 /**
- * Sends an email using SendGrid
+ * Sends an email using AWS SES
  * @param params Email parameters (to, from, subject, text/html)
  * @returns Promise resolving to boolean indicating success
  */
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  if (!process.env.SENDGRID_API_KEY) {
-    log('Cannot send email: SendGrid API key not configured', 'email');
+  if (!process.env.SES_USERNAME || !process.env.SES_PASSWORD) {
+    log('Cannot send email: AWS SES credentials not configured', 'email');
     return false;
   }
 
   try {
-    await mailService.send({
-      to: params.to,
-      from: params.from ? params.from : 'noreply@campaignhub.com', // Default sender
-      subject: params.subject,
-      text: params.text || '',
-      html: params.html || '',
-    });
+    const sender = params.from || process.env.SES_SENDER || 'noreply@campaignhub.com';
+    
+    const sesParams: AWS.SES.SendEmailRequest = {
+      Source: sender,
+      Destination: {
+        ToAddresses: [params.to]
+      },
+      Message: {
+        Subject: {
+          Data: params.subject
+        },
+        Body: {
+          Html: params.html ? { Data: params.html } : undefined,
+          Text: params.text ? { Data: params.text } : undefined
+        }
+      }
+    };
+    
+    await ses.sendEmail(sesParams).promise();
     log(`Email sent to ${params.to}`, 'email');
     return true;
   } catch (error) {
-    log(`SendGrid email error: ${error}`, 'email');
+    log(`AWS SES email error: ${error}`, 'email');
     return false;
   }
 }
@@ -97,7 +115,7 @@ export async function sendPasswordResetEmail(
   
   return sendEmail({
     to,
-    from: 'noreply@campaignhub.com',
+    from: process.env.SES_SENDER || 'noreply@campaignhub.com',
     subject,
     html,
     text,

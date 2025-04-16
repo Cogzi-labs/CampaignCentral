@@ -608,7 +608,7 @@ export class MemStorage implements IStorage {
     if (!user) throw new Error('User not found');
     
     // Generate random token
-    const token = crypto.randomBytes(20).toString('hex');
+    const token = Buffer.from(crypto.getRandomValues(new Uint8Array(20))).toString('hex');
     
     // Set token expiry to 1 hour from now
     const expiry = new Date();
