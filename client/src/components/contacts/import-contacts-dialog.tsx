@@ -130,16 +130,19 @@ export function ImportContactsDialog({ open, onOpenChange }: ImportContactsDialo
           <DialogTitle>Import Contacts</DialogTitle>
           <DialogDescription>
             Upload a CSV file with contact information. The file should have headers for name, mobile, location, and label.
-            <a 
-              href="/api/templates/contact-csv" 
-              className="inline-flex items-center mt-2 text-primary hover:text-blue-700 font-medium"
-              target="_blank"
-              rel="noopener noreferrer"
+          </DialogDescription>
+          <div className="mt-2">
+            <button 
+              onClick={() => {
+                window.open('/api/templates/contact-csv', '_blank');
+              }}
+              className="inline-flex items-center text-primary hover:text-blue-700 font-medium text-sm"
+              type="button"
             >
               <Download className="h-4 w-4 mr-1" />
               Download sample template
-            </a>
-          </DialogDescription>
+            </button>
+          </div>
         </DialogHeader>
         
         <div className="mt-4">
