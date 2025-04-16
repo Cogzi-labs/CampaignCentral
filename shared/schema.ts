@@ -108,14 +108,14 @@ export type Analytics = typeof analytics.$inferSelect;
 export const settings = pgTable("settings", {
   id: serial("id").primaryKey(),
   accountId: integer("account_id").notNull().references(() => accounts.id),
-  wabaid: text("wabaid"),
+  wabaApiUrl: text("waba_api_url"), // Full WhatsApp Business API URL
   facebookAccessToken: text("facebook_access_token"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const insertSettingsSchema = createInsertSchema(settings).pick({
   accountId: true,
-  wabaid: true,
+  wabaApiUrl: true,
   facebookAccessToken: true,
 });
 

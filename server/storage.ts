@@ -799,7 +799,7 @@ export class MemStorage implements IStorage {
       id, 
       accountId,
       updatedAt,
-      wabaid: settingsData.wabaid || null,
+      wabaApiUrl: settingsData.wabaApiUrl || null,
       facebookAccessToken: settingsData.facebookAccessToken || null
     };
     this.settingsData.set(id, settings);

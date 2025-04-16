@@ -441,7 +441,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get settings for the user's account
       const settings = await storage.getSettings(user.accountId);
       
-      if (!settings || !settings.wabaid || !settings.facebookAccessToken) {
+      if (!settings || !settings.wabaApiUrl || !settings.facebookAccessToken) {
         return res.status(400).json({ 
           message: "Facebook API settings not configured", 
           code: "SETTINGS_MISSING" 
@@ -450,7 +450,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Facebook Graph API call using account-specific settings
       const response = await fetch(
-        `https://graph.facebook.com/v22.0/${settings.wabaid}/message_templates?category=marketing`,
+        `${settings.wabaApiUrl}`,
         {
           headers: {
             'Authorization': `Bearer ${settings.facebookAccessToken}`
