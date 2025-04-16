@@ -9,12 +9,13 @@ dotenv.config();
 const SES_USERNAME = process.env.SES_USERNAME || '';
 const SES_PASSWORD = process.env.SES_PASSWORD || '';
 const SES_SENDER = process.env.SES_SENDER || '';
+const SES_REGION = process.env.SES_REGION || 'ap-south-1'; // Default to ap-south-1 if not provided
 
 // Initialize AWS SES service
 const sesConfig = {
   accessKeyId: SES_USERNAME,
   secretAccessKey: SES_PASSWORD,
-  region: 'ap-south-1', // Extracted from the host endpoint
+  region: SES_REGION,
 };
 
 // Log loaded credentials (without sensitive information)
@@ -27,7 +28,7 @@ const ses = new AWS.SES(sesConfig);
 if (SES_USERNAME && SES_PASSWORD) {
   log('AWS SES credentials configured', 'email');
   log(`Using SES username: ${SES_USERNAME}`, 'email');
-  log(`Using SES region: ap-south-1`, 'email');
+  log(`Using SES region: ${SES_REGION}`, 'email');
 } else {
   log('AWS SES credentials not found. Email functionality is disabled.', 'email');
   log(`SES_USERNAME exists: ${!!SES_USERNAME}`, 'email');
@@ -56,6 +57,8 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
   try {
     const sender = params.from || SES_SENDER || 'noreply@campaignhub.com';
     
+    log(`Attempting to send email from ${sender} to ${params.to} using region ${SES_REGION}`, 'email');
+    
     const sesParams: AWS.SES.SendEmailRequest = {
       Source: sender,
       Destination: {
@@ -72,11 +75,12 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
       }
     };
     
-    await ses.sendEmail(sesParams).promise();
-    log(`Email sent to ${params.to}`, 'email');
+    const result = await ses.sendEmail(sesParams).promise();
+    log(`Email sent successfully to ${params.to}. MessageId: ${result.MessageId}`, 'email');
     return true;
   } catch (error) {
     log(`AWS SES email error: ${error}`, 'email');
+    console.error('Full error object:', error);
     return false;
   }
 }
