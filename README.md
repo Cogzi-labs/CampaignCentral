@@ -83,7 +83,14 @@ npm run build
 
 #### 7. Start the server
 ```bash
+# Method 1: Using npm start (might cause issues in some environments)
 npm start
+
+# Method 2: Using our custom shell script (recommended for Linux/macOS)
+./start.sh
+
+# Method 3: Using our custom Node.js script (for Windows or Node-based environments)
+node start.js
 ```
 
 #### 8. Access the application
@@ -104,9 +111,30 @@ npm run dev
 - In production, consider using a process manager like PM2 to keep the application running
 
 ## Troubleshooting
+
+### Database Issues
 - If you encounter database connection issues, verify your DATABASE_URL is correct
 - Make sure PostgreSQL is running and accessible
-- Check that the required ports (default: 5000) are not being used by other applications
+- Check that the required ports (default: 5432 for PostgreSQL) are not being used by other applications
+
+### Production Deployment Issues
+- If `npm start` throws errors related to ES modules or paths, use one of our custom start scripts:
+  - For Linux/macOS: `./start.sh` (recommended)
+  - For Windows or Node-based environments: `node start.js`
+- These scripts will automatically handle both production and development environments
+- They can detect whether a build exists and create one if needed
+- If the build process fails, check for any TypeScript errors with `npm run check`
+- Make sure all environment variables are correctly set in your production environment
+- For containerized deployments, use the start.sh script in your entrypoint command
+
+### Email Sending Issues
+- For AWS SES email functionality, make sure these environment variables are set:
+  - SES_USERNAME: Your AWS Access Key ID
+  - SES_PASSWORD: Your AWS Secret Access Key  
+  - SES_REGION: AWS region (default: ap-south-1)
+  - SES_SENDER: The verified sender email address
+- If you get "SignatureDoesNotMatch" errors, verify your AWS credentials are correct
+- Make sure the sender email is verified in AWS SES
 
 ## Project Structure
 ```
