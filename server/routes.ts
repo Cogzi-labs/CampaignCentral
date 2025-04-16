@@ -7,7 +7,7 @@ import multer from "multer";
 import { parse } from "csv-parse";
 import fs from "fs";
 import * as path from "path";
-import { sendPasswordResetEmail } from "./email";
+import { sendPasswordResetEmail, sendEmail } from "./email";
 import { scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 
@@ -935,6 +935,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Password reset error:", error);
       res.status(500).json({ 
         message: "Error processing password reset", 
+        error: (error as Error).message 
+      });
+    }
+  });
+  
+  // Test email endpoint (for debugging email issues)
+  app.post("/api/test-email", async (req, res) => {
+    try {
+      console.log("Starting email test...");
+      
+      // Check if AWS SES credentials are configured
+      if (!process.env.SES_USERNAME || !process.env.SES_PASSWORD || !process.env.SES_SENDER) {
+        console.error("Missing AWS SES credentials:", {
+          username: !!process.env.SES_USERNAME,
+          password: !!process.env.SES_PASSWORD,
+          sender: !!process.env.SES_SENDER,
+          region: process.env.SES_REGION || "not set"
+        });
+        
+        return res.status(500).json({ 
+          message: "Email service not configured. AWS SES credentials are missing.",
+          missing: {
+            username: !process.env.SES_USERNAME,
+            password: !process.env.SES_PASSWORD,
+            sender: !process.env.SES_SENDER
+          }
+        });
+      }
+      
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email address is required" });
+      }
+      
+      // Send test email
+      console.log(`Attempting to send test email to ${email} from ${process.env.SES_SENDER}`);
+      
+      try {
+        const emailResult = await sendEmail({
+          to: email,
+          subject: "CampaignHub Test Email",
+          text: "This is a test email from CampaignHub to verify email sending works correctly.",
+          html: "<h1>Test Email</h1><p>This is a test email from CampaignHub to verify email sending works correctly.</p>"
+        });
+        
+        console.log("Email test result:", emailResult);
+        
+        if (emailResult) {
+          res.status(200).json({ 
+            message: "Test email sent successfully",
+            success: true
+          });
+        } else {
+          res.status(500).json({ 
+            message: "Failed to send test email. Check server logs for details.",
+            success: false
+          });
+        }
+      } catch (emailError) {
+        console.error("Email sending error:", emailError);
+        res.status(500).json({ 
+          message: "Error sending test email",
+          error: (emailError as Error).message
+        });
+      }
+    } catch (error) {
+      console.error("Test email endpoint error:", error);
+      res.status(500).json({ 
+        message: "Error in test email endpoint", 
         error: (error as Error).message 
       });
     }

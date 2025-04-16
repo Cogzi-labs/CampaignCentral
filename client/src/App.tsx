@@ -14,6 +14,7 @@ import SettingsPage from "@/pages/settings-page";
 import HelpPage from "@/pages/help-page";
 import ForgotPasswordPage from "@/pages/forgot-password-page";
 import ResetPasswordPage from "@/pages/reset-password-page";
+import EmailTestPage from "@/pages/email-test-page";
 import { ProtectedRoute } from "./lib/protected-route";
 
 function Router() {
