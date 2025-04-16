@@ -27,9 +27,14 @@ export default function AnalyticsPage() {
   
   // Fetch analytics data
   const { data: analytics = [], isLoading: analyticsLoading } = useQuery({
-    queryKey: ["/api/analytics"],
+    queryKey: ["/api/analytics", campaignId],
     queryFn: async ({ queryKey }) => {
-      const res = await fetch(queryKey[0] as string, {
+      const endpoint = queryKey[0] as string;
+      const campId = queryKey[1] as number | undefined;
+      
+      const url = campId ? `${endpoint}?campaignId=${campId}` : endpoint;
+      
+      const res = await fetch(url, {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch analytics");
@@ -221,40 +226,65 @@ export default function AnalyticsPage() {
         </div>
       </div>
       
-      {/* Date Range Selector */}
+      {/* Filters Section */}
       <Card className="mb-6">
         <CardContent className="py-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between">
-            <div className="font-medium text-gray-800 mb-2 sm:mb-0">Filter by date range:</div>
-            <div className="flex space-x-2">
-              <Button 
-                variant={dateRange === "last-7-days" ? "default" : "outline"} 
-                size="sm"
-                onClick={() => setDateRange("last-7-days")}
-              >
-                Last 7 days
-              </Button>
-              <Button 
-                variant={dateRange === "last-30-days" ? "default" : "outline"} 
-                size="sm"
-                onClick={() => setDateRange("last-30-days")}
-              >
-                Last 30 days
-              </Button>
-              <Button 
-                variant={dateRange === "last-90-days" ? "default" : "outline"} 
-                size="sm"
-                onClick={() => setDateRange("last-90-days")}
-              >
-                Last 90 days
-              </Button>
-              <Button 
-                variant={dateRange === "custom" ? "default" : "outline"} 
-                size="sm"
-                onClick={() => setDateRange("custom")}
-              >
-                Custom
-              </Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Date Range Selector */}
+            <div>
+              <div className="font-medium text-gray-800 mb-2">Filter by date range:</div>
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  variant={dateRange === "last-7-days" ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => setDateRange("last-7-days")}
+                >
+                  Last 7 days
+                </Button>
+                <Button 
+                  variant={dateRange === "last-30-days" ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => setDateRange("last-30-days")}
+                >
+                  Last 30 days
+                </Button>
+                <Button 
+                  variant={dateRange === "last-90-days" ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => setDateRange("last-90-days")}
+                >
+                  Last 90 days
+                </Button>
+                <Button 
+                  variant={dateRange === "custom" ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => setDateRange("custom")}
+                >
+                  Custom
+                </Button>
+              </div>
+            </div>
+            
+            {/* Campaign Selector */}
+            <div>
+              <div className="font-medium text-gray-800 mb-2">Filter by campaign:</div>
+              <div className="flex flex-col space-y-2">
+                <select 
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  value={campaignId || ""}
+                  onChange={(e) => setCampaignId(e.target.value ? parseInt(e.target.value) : undefined)}
+                >
+                  <option value="">All Campaigns</option>
+                  {campaigns.map((campaign: any) => (
+                    <option key={campaign.id} value={campaign.id}>
+                      {campaign.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="text-xs text-gray-500">
+                  Select a campaign to filter analytics data and export specific campaign metrics
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -375,6 +405,8 @@ export default function AnalyticsPage() {
                     <Bar dataKey="deliveryRate" name="Delivery Rate %" fill="#3B82F6" />
                     <Bar dataKey="readRate" name="Read Rate %" fill="#10B981" />
                     <Bar dataKey="optoutRate" name="Opt-out Rate %" fill="#8B5CF6" />
+                    <Bar dataKey="holdRate" name="Hold Rate %" fill="#F59E0B" />
+                    <Bar dataKey="failedRate" name="Failed Rate %" fill="#EF4444" />
                   </BarChart>
                 </ResponsiveContainer>
               )}
