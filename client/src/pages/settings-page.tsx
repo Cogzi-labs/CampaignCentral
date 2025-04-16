@@ -1,11 +1,17 @@
 import * as React from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { getQueryFn, queryClient } from "@/lib/queryClient";
 import { 
   BellRing, 
   Globe, 
@@ -15,7 +21,9 @@ import {
   Shield, 
   Clock, 
   BadgeAlert, 
-  Send
+  Send,
+  Copy,
+  Loader2
 } from "lucide-react";
 
 export default function SettingsPage() {

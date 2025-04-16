@@ -769,6 +769,41 @@ export class MemStorage implements IStorage {
     this.analyticsData.set(id, analytics);
     return analytics;
   }
+  
+  // SETTINGS METHODS
+  async getSettings(accountId: number): Promise<Settings | undefined> {
+    return Array.from(this.settingsData.values()).find(
+      (settings) => settings.accountId === accountId
+    );
+  }
+  
+  async updateSettings(accountId: number, settingsData: Partial<InsertSettings>): Promise<Settings> {
+    // Check if settings already exist for this account
+    const existing = await this.getSettings(accountId);
+    
+    if (existing) {
+      // Update existing settings
+      const updated = { 
+        ...existing, 
+        ...settingsData,
+        updatedAt: new Date()
+      };
+      this.settingsData.set(existing.id, updated);
+      return updated;
+    }
+    
+    // Create new settings
+    const id = this.settingsCurrentId++;
+    const updatedAt = new Date();
+    const settings: Settings = { 
+      ...settingsData, 
+      id, 
+      accountId,
+      updatedAt
+    };
+    this.settingsData.set(id, settings);
+    return settings;
+  }
 }
 
 // Use database storage if DATABASE_URL is provided, otherwise use in-memory storage

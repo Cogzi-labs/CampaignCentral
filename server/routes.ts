@@ -407,21 +407,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // SETTINGS API
+  app.get("/api/settings", checkAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const settings = await storage.getSettings(user.accountId);
+      res.json(settings || { accountId: user.accountId });
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching settings", error: (error as Error).message });
+    }
+  });
+
+  app.put("/api/settings", checkAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const settingsData = {
+        ...req.body,
+        accountId: user.accountId
+      };
+      
+      const settings = await storage.updateSettings(user.accountId, settingsData);
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Error updating settings", error: (error as Error).message });
+    }
+  });
+
   // Templates API - Facebook Graph API
   app.get("/api/templates", checkAuth, async (req, res) => {
     try {
-      // Facebook Graph API call
+      const user = req.user!;
+      
+      // Get settings for the user's account
+      const settings = await storage.getSettings(user.accountId);
+      
+      if (!settings || !settings.wabaid || !settings.facebookAccessToken) {
+        return res.status(400).json({ 
+          message: "Facebook API settings not configured", 
+          code: "SETTINGS_MISSING" 
+        });
+      }
+      
+      // Facebook Graph API call using account-specific settings
       const response = await fetch(
-        'https://graph.facebook.com/v22.0/1118629266697626/message_templates?category=marketing',
+        `https://graph.facebook.com/v22.0/${settings.wabaid}/message_templates?category=marketing`,
         {
           headers: {
-            'Authorization': 'Bearer EAAWKOvgPZCjMBOywd6Ajss8QaoZCCUUHXEXDC1zJb6PJhcniGkkZAqoZBYiuZBA6ySHZBEBmQ3NN6BRhKULli7PC3Db2OgPT3hXMYZC5lEYFMDIa1icfxLtBke7p7My4x32ghAZCg8cKWKBHNMoIGCnGNOZCuQQYgzjbaIK6TNAaghEgMvi2cmik1GQrRBlY6JUtZBxgZDZD'
+            'Authorization': `Bearer ${settings.facebookAccessToken}`
           }
         }
       );
       
       if (!response.ok) {
-        // If Facebook API fails, fall back to mock data for development purposes
         throw new Error(`Facebook API returned ${response.status}: ${await response.text()}`);
       }
       
@@ -437,17 +474,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(templates);
     } catch (error) {
       console.error("Error fetching Facebook templates:", error);
-      
-      // Fallback to mock templates in case of error
-      const templates = [
-        { id: "welcome", name: "Welcome Template", description: "Welcome new subscribers" },
-        { id: "promotional", name: "Promotional Template", description: "Announce special offers" },
-        { id: "announcement", name: "Announcement Template", description: "Announce important news" },
-        { id: "feedback", name: "Feedback Template", description: "Ask for customer feedback" },
-        { id: "holiday", name: "Holiday Template", description: "Holiday greetings" }
-      ];
-      
-      res.status(200).json(templates);
+      res.status(500).json({ 
+        message: "Error fetching Facebook templates", 
+        error: (error as Error).message 
+      });
     }
   });
   
