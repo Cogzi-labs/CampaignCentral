@@ -19,7 +19,7 @@ import {
   Legend, 
   Cell
 } from "recharts";
-import { Vote, UsersIcon, EyeIcon, MousePointerClick, BarChart2 } from "lucide-react";
+import { Vote, UsersIcon, EyeIcon, MousePointerClick, BarChart2, AlertCircle as AlertCircleIcon, Pause as PauseIcon } from "lucide-react";
 
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = React.useState<string>("last-7-days");
@@ -315,7 +315,7 @@ export default function AnalyticsPage() {
       </Card>
       
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -391,6 +391,60 @@ export default function AnalyticsPage() {
                   <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
                 {Math.abs(readRateChange)}%
+              </span>
+              <span className="text-gray-500 ml-2">from last period</span>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-500 text-sm">Hold Rate</p>
+                {analyticsLoading ? (
+                  <Skeleton className="h-8 w-16 mt-1" />
+                ) : (
+                  <p className="text-2xl font-semibold text-gray-800">{(Math.random() * 5).toFixed(1)}%</p>
+                )}
+              </div>
+              <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center">
+                <PauseIcon className="h-6 w-6 text-amber-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-sm">
+              <span className="text-amber-500 font-medium flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                {(Math.random() * 2).toFixed(1)}%
+              </span>
+              <span className="text-gray-500 ml-2">from last period</span>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-500 text-sm">Failed Rate</p>
+                {analyticsLoading ? (
+                  <Skeleton className="h-8 w-16 mt-1" />
+                ) : (
+                  <p className="text-2xl font-semibold text-gray-800">{(Math.random() * 3).toFixed(1)}%</p>
+                )}
+              </div>
+              <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertCircleIcon className="h-6 w-6 text-red-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center text-sm">
+              <span className="text-red-500 font-medium flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                {(Math.random() * 1.5).toFixed(1)}%
               </span>
               <span className="text-gray-500 ml-2">from last period</span>
             </div>
@@ -569,6 +623,28 @@ export default function AnalyticsPage() {
                             <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                           {(Math.random() * 2).toFixed(1)}%
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <span className="text-gray-900 font-medium">{campaign.holdRate.toFixed(1)}%</span>
+                        <span className="ml-2 text-amber-500 flex items-center text-xs">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          {(Math.random() * 1.5).toFixed(1)}%
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <span className="text-gray-900 font-medium">{campaign.failedRate.toFixed(1)}%</span>
+                        <span className="ml-2 text-red-500 flex items-center text-xs">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          {(Math.random() * 1).toFixed(1)}%
                         </span>
                       </div>
                     </td>
