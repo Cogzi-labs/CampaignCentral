@@ -9,6 +9,8 @@ import DashboardPage from "@/pages/dashboard-page";
 import ContactsPage from "@/pages/contacts-page";
 import CampaignsPage from "@/pages/campaigns-page";
 import AnalyticsPage from "@/pages/analytics-page";
+import AccountPage from "@/pages/account-page";
+import SettingsPage from "@/pages/settings-page";
 import { ProtectedRoute } from "./lib/protected-route";
 
 function Router() {
@@ -19,8 +21,8 @@ function Router() {
       <ProtectedRoute path="/contacts" component={ContactsPage} />
       <ProtectedRoute path="/campaigns" component={CampaignsPage} />
       <ProtectedRoute path="/analytics" component={AnalyticsPage} />
-      <ProtectedRoute path="/account" component={NotFound} />
-      <ProtectedRoute path="/settings" component={NotFound} />
+      <ProtectedRoute path="/account" component={AccountPage} />
+      <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/help" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
