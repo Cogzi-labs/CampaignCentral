@@ -57,6 +57,21 @@ function replacePlaceholders(sql, replacements) {
   return result;
 }
 
+// Process SQL to remove psql meta-commands
+function processSqlForNodePg(sql) {
+  // Split by lines
+  const lines = sql.split('\n');
+  
+  // Filter out lines that start with psql meta commands like \c, \echo, etc.
+  const filteredLines = lines.filter(line => {
+    const trimmedLine = line.trim();
+    return !trimmedLine.startsWith('\\');
+  });
+  
+  // Join back into a single string
+  return filteredLines.join('\n');
+}
+
 // Execute a SQL script
 async function executeSQL(client, sql, label) {
   try {
@@ -96,6 +111,9 @@ async function main() {
       'your_secure_password': dbPassword,
       'campaign_management': dbName
     });
+    
+    // Remove psql meta-commands like \c and \echo
+    setupDbSql = processSqlForNodePg(setupDbSql);
 
     // Connect to PostgreSQL as superuser
     const superuserClient = new Client({
@@ -129,14 +147,18 @@ async function main() {
     await userClient.connect();
     console.log(`${colors.green}Connected to ${dbName} as ${dbUser}${colors.reset}`);
 
+    // Process SQL files to remove psql meta-commands
+    const processedCreateTablesSql = processSqlForNodePg(createTablesSql);
+    const processedSeedDataSql = processSqlForNodePg(seedDataSql);
+    
     // Step 2: Create tables
-    const success2 = await executeSQL(userClient, createTablesSql, 'Step 2/3: Creating tables');
+    const success2 = await executeSQL(userClient, processedCreateTablesSql, 'Step 2/3: Creating tables');
     if (!success2) {
       throw new Error('Failed to create tables');
     }
 
     // Step 3: Add seed data
-    const success3 = await executeSQL(userClient, seedDataSql, 'Step 3/3: Adding seed data');
+    const success3 = await executeSQL(userClient, processedSeedDataSql, 'Step 3/3: Adding seed data');
     if (!success3) {
       throw new Error('Failed to add seed data');
     }

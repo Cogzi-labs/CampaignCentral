@@ -8,14 +8,12 @@ CREATE USER campaign_manager WITH PASSWORD 'your_secure_password' CREATEDB;
 -- Create the database
 CREATE DATABASE campaign_management OWNER campaign_manager;
 
--- Connect to the new database
-\c campaign_management
-
--- Create necessary extensions if needed
--- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- Grant privileges
+-- Note: The following grant must be run while connected to the postgres database
 GRANT ALL PRIVILEGES ON DATABASE campaign_management TO campaign_manager;
+
+-- The \c campaign_management command would normally come here in psql
+-- but we handle database switching in the Node.js script instead
 
 -- Output success message
 \echo 'Database and user created successfully!'
