@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { AddContactDialog } from "@/components/contacts/add-contact-dialog";
 import { ImportContactsDialog } from "@/components/contacts/import-contacts-dialog";
+import { DeleteContactDialog } from "@/components/contacts/delete-contact-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Badge } from "@/components/ui/badge";
@@ -265,26 +266,12 @@ export default function ContactsPage() {
         onOpenChange={setShowImportContacts}
       />
       
-      {/* Delete Contact Confirmation */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the contact. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteContact}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Delete Contact Dialog */}
+      <DeleteContactDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        contact={selectedContact}
+      />
     </DashboardLayout>
   );
 }
