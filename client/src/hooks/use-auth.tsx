@@ -40,9 +40,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     data: user,
     error,
     isLoading,
+    refetch: refetchUser
   } = useQuery<SelectUser | null>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    retry: 1,
+    retryDelay: 1000,
   });
 
   const loginMutation = useMutation({
@@ -52,6 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      // Explicitly refetch user data to ensure session is established
+      refetchUser();
       navigate("/");
       toast({
         title: "Login successful",

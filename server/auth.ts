@@ -33,12 +33,14 @@ export function setupAuth(app: Express) {
   
   const sessionSettings: session.SessionOptions = {
     secret: sessionSecret,
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
     store: storage.sessionStore,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // 1 day
       secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      sameSite: 'lax'
     }
   };
 
@@ -106,18 +108,27 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: Error | null, user: SelectUser | false, info: { message: string } | undefined) => {
       if (err) {
         return next(err);
       }
       if (!user) {
         return res.status(401).json({ message: "Invalid username or password" });
       }
+      
       req.login(user, (err) => {
         if (err) {
           return next(err);
         }
-        return res.status(200).json(user);
+        
+        // Save session explicitly to ensure it's stored before response
+        req.session.save((err) => {
+          if (err) {
+            return next(err);
+          }
+          console.log("User authenticated:", user.id, "Session ID:", req.sessionID);
+          return res.status(200).json(user);
+        });
       });
     })(req, res, next);
   });
@@ -130,7 +141,11 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    if (!req.isAuthenticated()) {
+      console.log("User not authenticated. Session ID:", req.sessionID);
+      return res.sendStatus(401);
+    }
+    console.log("User authenticated. User ID:", req.user?.id, "Session ID:", req.sessionID);
     res.json(req.user);
   });
 }
