@@ -19,7 +19,7 @@ import {
   Legend, 
   Cell
 } from "recharts";
-import { Vote, UsersIcon, EyeIcon, MousePointerClick } from "lucide-react";
+import { Vote, UsersIcon, EyeIcon, MousePointerClick, BarChart2 } from "lucide-react";
 
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = React.useState<string>("last-7-days");
@@ -328,7 +328,7 @@ export default function AnalyticsPage() {
                 </div>
               ) : campaignPerformanceData.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-gray-500">
-                  <BarChart2Icon className="h-12 w-12 mb-2 text-gray-300" />
+                  <BarChart2 className="h-12 w-12 mb-2 text-gray-300" />
                   <p>No campaign data available</p>
                 </div>
               ) : (

@@ -19,6 +19,9 @@ function Router() {
       <ProtectedRoute path="/contacts" component={ContactsPage} />
       <ProtectedRoute path="/campaigns" component={CampaignsPage} />
       <ProtectedRoute path="/analytics" component={AnalyticsPage} />
+      <ProtectedRoute path="/account" component={NotFound} />
+      <ProtectedRoute path="/settings" component={NotFound} />
+      <ProtectedRoute path="/help" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
   );
