@@ -27,6 +27,62 @@ import {
 } from "lucide-react";
 
 export default function SettingsPage() {
+  // State for WhatsApp Business API settings
+  const [whatsappSettings, setWhatsappSettings] = useState({
+    wabaid: '',
+    facebookAccessToken: ''
+  });
+  
+  // Fetch current settings
+  const { 
+    data: settings, 
+    isLoading: settingsLoading 
+  } = useQuery({
+    queryKey: ["/api/settings"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
+
+  // Update local state when settings data is loaded
+  React.useEffect(() => {
+    if (settings) {
+      setWhatsappSettings({
+        wabaid: settings.wabaid || '',
+        facebookAccessToken: settings.facebookAccessToken || ''
+      });
+    }
+  }, [settings]);
+  
+  // Mutation to update settings
+  const { 
+    mutate: updateSettings, 
+    isPending: whatsappSettingsLoading 
+  } = useMutation({
+    mutationFn: async (settingsData: typeof whatsappSettings) => {
+      const res = await apiRequest("PUT", "/api/settings", settingsData);
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "WhatsApp API settings saved",
+        description: "Your API settings have been updated successfully"
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to save settings",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Handle saving WhatsApp API settings
+  const handleSaveWhatsAppSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateSettings(whatsappSettings);
+  };
+
   const handleSaveNotifications = (e: React.FormEvent) => {
     e.preventDefault();
     toast({
@@ -389,7 +445,67 @@ export default function SettingsPage() {
               <CardDescription>Manage API keys and integrations</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4 mb-6">
+              <div className="space-y-6 mb-6">
+                {/* WhatsApp Business API Settings */}
+                <div className="p-4 border rounded-md">
+                  <h4 className="font-medium mb-3">WhatsApp Business API Settings</h4>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Configure your WhatsApp Business API credentials to send messages through campaigns
+                  </p>
+                  <form onSubmit={handleSaveWhatsAppSettings}>
+                    <div className="space-y-4 mb-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="wabaid">WhatsApp Business Account ID (WABAID)</Label>
+                        <Input 
+                          id="wabaid"
+                          placeholder="Enter your WhatsApp Business Account ID"
+                          value={whatsappSettings.wabaid}
+                          onChange={(e) => setWhatsappSettings({
+                            ...whatsappSettings,
+                            wabaid: e.target.value
+                          })}
+                        />
+                        <p className="text-xs text-gray-500">
+                          This ID is used to fetch message templates from Facebook Graph API
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="facebookAccessToken">Facebook Access Token</Label>
+                        <Input 
+                          id="facebookAccessToken"
+                          type="password"
+                          placeholder="Enter your Facebook Access Token"
+                          value={whatsappSettings.facebookAccessToken}
+                          onChange={(e) => setWhatsappSettings({
+                            ...whatsappSettings,
+                            facebookAccessToken: e.target.value
+                          })}
+                        />
+                        <p className="text-xs text-gray-500">
+                          Authentication token for accessing the Facebook Graph API
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-end">
+                      <Button 
+                        type="submit" 
+                        size="sm"
+                        disabled={whatsappSettingsLoading}
+                      >
+                        {whatsappSettingsLoading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            Saving...
+                          </>
+                        ) : 'Save WhatsApp Settings'}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+                
+                {/* API Key */}
                 <div className="p-4 border rounded-md">
                   <div className="flex justify-between items-start mb-2">
                     <div>
@@ -404,6 +520,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 
+                {/* Webhook URL */}
                 <div className="p-4 border rounded-md">
                   <h4 className="font-medium mb-2">Webhook URL</h4>
                   <p className="text-sm text-gray-500 mb-2">
@@ -419,6 +536,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 
+                {/* API Usage */}
                 <div className="p-4 border rounded-md">
                   <h4 className="font-medium mb-3">API Usage</h4>
                   <div className="space-y-2">

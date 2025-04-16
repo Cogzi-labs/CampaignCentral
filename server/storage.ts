@@ -796,10 +796,11 @@ export class MemStorage implements IStorage {
     const id = this.settingsCurrentId++;
     const updatedAt = new Date();
     const settings: Settings = { 
-      ...settingsData, 
       id, 
       accountId,
-      updatedAt
+      updatedAt,
+      wabaid: settingsData.wabaid || null,
+      facebookAccessToken: settingsData.facebookAccessToken || null
     };
     this.settingsData.set(id, settings);
     return settings;
