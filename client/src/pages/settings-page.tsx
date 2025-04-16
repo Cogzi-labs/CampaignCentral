@@ -60,7 +60,9 @@ export default function SettingsPage() {
     if (settings) {
       setWhatsappSettings({
         wabaApiUrl: settings.wabaApiUrl ? settings.wabaApiUrl : '',
-        facebookAccessToken: settings.facebookAccessToken ? settings.facebookAccessToken : ''
+        facebookAccessToken: settings.facebookAccessToken ? settings.facebookAccessToken : '',
+        partnerMobile: settings.partnerMobile ? settings.partnerMobile : '',
+        wabaId: settings.wabaId ? settings.wabaId : ''
       });
     }
   }, [settings]);
@@ -497,6 +499,38 @@ export default function SettingsPage() {
                         />
                         <p className="text-xs text-gray-500">
                           Authentication token for accessing the Facebook Graph API
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="partnerMobile">Partner Mobile Number</Label>
+                        <Input 
+                          id="partnerMobile"
+                          placeholder="Enter your partner mobile number (e.g., 919069001515)"
+                          value={whatsappSettings.partnerMobile}
+                          onChange={(e) => setWhatsappSettings({
+                            ...whatsappSettings,
+                            partnerMobile: e.target.value
+                          })}
+                        />
+                        <p className="text-xs text-gray-500">
+                          The mobile number used to send campaigns (with country code, no spaces or symbols)
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="wabaId">WhatsApp Business Account ID (WABA ID)</Label>
+                        <Input 
+                          id="wabaId"
+                          placeholder="Enter your WABA ID"
+                          value={whatsappSettings.wabaId}
+                          onChange={(e) => setWhatsappSettings({
+                            ...whatsappSettings,
+                            wabaId: e.target.value
+                          })}
+                        />
+                        <p className="text-xs text-gray-500">
+                          Your WhatsApp Business Account ID used for campaign API integration
                         </p>
                       </div>
                     </div>

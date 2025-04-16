@@ -960,7 +960,9 @@ export class MemStorage implements IStorage {
       accountId,
       updatedAt,
       wabaApiUrl: settingsData.wabaApiUrl || null,
-      facebookAccessToken: settingsData.facebookAccessToken || null
+      facebookAccessToken: settingsData.facebookAccessToken || null,
+      partnerMobile: settingsData.partnerMobile || null,
+      wabaId: settingsData.wabaId || null
     };
     this.settingsData.set(id, settings);
     return settings;
