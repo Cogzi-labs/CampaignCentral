@@ -23,10 +23,23 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- Insert sample campaign templates
-INSERT INTO campaigns (name, template, contact_label, status, account_id, created_at)
+INSERT INTO campaigns (name, template, contact_label, status, account_id, scheduled_at, created_at)
 VALUES
-  ('Welcome Campaign', 'Hi {name}, welcome to our service!', 'Customer', 'draft', 1, NOW()),
-  ('Special Offer', 'Hi {name}, check out our special offers this month!', 'VIP', 'draft', 1, NOW())
+  ('Welcome Campaign', 'welcome_template', 'Customer', 'draft', 1, NOW() + INTERVAL '1 day', NOW()),
+  ('Special Offer', 'special_offer_template', 'VIP', 'draft', 1, NOW() + INTERVAL '2 days', NOW())
+ON CONFLICT DO NOTHING;
+
+-- Insert sample analytics data
+INSERT INTO analytics (campaign_id, sent, delivered, read, optout, hold, failed, account_id, updated_at)
+VALUES
+  (1, 100, 95, 80, 5, 3, 2, 1, NOW()),
+  (2, 50, 48, 40, 2, 1, 1, 1, NOW())
+ON CONFLICT DO NOTHING;
+
+-- Insert sample settings
+INSERT INTO settings (account_id, waba_api_url, facebook_access_token, partner_mobile, waba_id, updated_at)
+VALUES 
+  (1, 'https://graph.facebook.com/v17.0/123456789/message_templates', 'SAMPLE_FB_TOKEN', '+919876543210', 'waba_123456789', NOW())
 ON CONFLICT DO NOTHING;
 
 -- Output success message

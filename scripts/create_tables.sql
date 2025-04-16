@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
   contact_label TEXT,
   status TEXT NOT NULL DEFAULT 'draft',
   account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  scheduled_at TIMESTAMP,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_campaigns_account_id ON campaigns(account_id);
@@ -53,14 +54,28 @@ CREATE TABLE IF NOT EXISTS analytics (
   id SERIAL PRIMARY KEY,
   campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
   sent INTEGER NOT NULL DEFAULT 0,
-  opened INTEGER NOT NULL DEFAULT 0,
-  clicked INTEGER NOT NULL DEFAULT 0,
-  converted INTEGER NOT NULL DEFAULT 0,
+  delivered INTEGER NOT NULL DEFAULT 0,
+  read INTEGER NOT NULL DEFAULT 0,
+  optout INTEGER NOT NULL DEFAULT 0,
+  hold INTEGER NOT NULL DEFAULT 0,
+  failed INTEGER NOT NULL DEFAULT 0,
   account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_analytics_campaign_id ON analytics(campaign_id);
 CREATE INDEX IF NOT EXISTS idx_analytics_account_id ON analytics(account_id);
+
+-- Create settings table
+CREATE TABLE IF NOT EXISTS settings (
+  id SERIAL PRIMARY KEY,
+  account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  waba_api_url TEXT,
+  facebook_access_token TEXT,
+  partner_mobile TEXT,
+  waba_id TEXT,
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_settings_account_id ON settings(account_id);
 
 -- Create session table for persistent sessions
 CREATE TABLE IF NOT EXISTS "session" (
