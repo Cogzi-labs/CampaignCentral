@@ -103,9 +103,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isLoading = userQuery.isLoading; 
   const refetchUser = userQuery.refetch;
 
-  // Effect to redirect to login page if unauthenticated and not already there
+  // Effect to redirect to login page if unauthenticated and not on auth-related pages
   useEffect(() => {
-    if (!isLoading && !user && location !== "/auth") {
+    // Array of public routes that can be accessed without authentication
+    const publicRoutes = ["/auth", "/forgot-password", "/reset-password"];
+    const isPublicRoute = publicRoutes.some(route => 
+      location === route || location.startsWith(route + "?")
+    );
+    
+    if (!isLoading && !user && !isPublicRoute) {
       console.log("Auth effect: No user detected, redirecting to login");
       navigate("/auth");
     }
