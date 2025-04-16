@@ -86,10 +86,14 @@ npm run build
 # Method 1: Using npm start (might cause issues in some environments)
 npm start
 
-# Method 2: Using our custom shell script (recommended for Linux/macOS)
+# Method 2: Using the simple production shell script (RECOMMENDED)
+./start-prod.sh
+
+# Alternative options:
+# For Linux/macOS with more detailed logging:
 ./start.sh
 
-# Method 3: Using our custom Node.js script (for Windows or Node-based environments)
+# For Windows or Node-based environments:
 node start.js
 ```
 
@@ -118,14 +122,26 @@ npm run dev
 - Check that the required ports (default: 5432 for PostgreSQL) are not being used by other applications
 
 ### Production Deployment Issues
-- If `npm start` throws errors related to ES modules or paths, use one of our custom start scripts:
-  - For Linux/macOS: `./start.sh` (recommended)
+- If you encounter the error `Cannot find package 'vite' imported from vite.config.ts`:
+  - Use the simplified start script: `./start-prod.sh` (most reliable option)
+  - This script specifically fixes the Vite dependency issue
+  
+- For other deployment issues, we provide alternative scripts:
+  - For Linux/macOS: `./start.sh` 
   - For Windows or Node-based environments: `node start.js`
-- These scripts will automatically handle both production and development environments
-- They can detect whether a build exists and create one if needed
-- If the build process fails, check for any TypeScript errors with `npm run check`
-- Make sure all environment variables are correctly set in your production environment
-- For containerized deployments, use the start.sh script in your entrypoint command
+  
+- All our start scripts will:
+  - Automatically handle both production and development environments
+  - Install necessary build dependencies if missing
+  - Detect whether a build exists and create one if needed
+  - Fall back to development mode if the build fails
+  
+- If the build process fails, check:
+  - TypeScript errors with `npm run check`
+  - Missing environment variables
+  - Node.js version compatibility (v18+ recommended)
+  
+- For containerized deployments, use the start-prod.sh script in your entrypoint command
 
 ### Email Sending Issues
 - For AWS SES email functionality, make sure these environment variables are set:

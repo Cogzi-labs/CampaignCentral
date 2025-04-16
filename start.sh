@@ -19,10 +19,16 @@ if [ "$NODE_ENV" = "production" ]; then
     # Ensure all dependencies are available
     echo "Ensuring all dependencies are installed..."
     
+    # Check if vite is installed
+    if ! npx --no-install vite --version > /dev/null 2>&1; then
+      echo "Vite not found in local node_modules, installing build dependencies..."
+      npm install --no-save vite esbuild
+    fi
+    
     # Try to build the application
     echo "Building the application..."
-    PATH=$(npm bin):$PATH NODE_ENV=production npx vite build && \
-    PATH=$(npm bin):$PATH NODE_ENV=production npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+    NODE_ENV=production npx vite build && \
+    NODE_ENV=production npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
     
     # Check if build was successful
     if [ -d "dist" ] && [ -f "dist/index.js" ]; then

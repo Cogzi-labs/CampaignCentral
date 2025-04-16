@@ -46,6 +46,25 @@ if (hasBuiltVersion) {
 } else {
   console.log('No production build found, attempting to create build...');
   
+  // Ensure build dependencies are installed
+  console.log('Checking for build dependencies...');
+  try {
+    const checkViteResult = spawnSync('npx', ['--no-install', 'vite', '--version'], { 
+      stdio: 'pipe',
+      encoding: 'utf-8' 
+    });
+    
+    if (checkViteResult.status !== 0) {
+      console.log('Vite not found in local node_modules, installing build dependencies...');
+      runCommand('npm', ['install', '--no-save', 'vite', 'esbuild']);
+    } else {
+      console.log(`Vite found: ${checkViteResult.stdout.trim()}`);
+    }
+  } catch (error) {
+    console.log('Error checking for Vite, will try to install:', error.message);
+    runCommand('npm', ['install', '--no-save', 'vite', 'esbuild']);
+  }
+  
   // Use npx to ensure we have the right path to the binaries
   console.log('Building client assets with Vite...');
   const viteBuildSuccess = runCommand('npx', ['vite', 'build'], { NODE_ENV: 'production' });
