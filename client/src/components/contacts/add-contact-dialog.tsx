@@ -24,7 +24,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Combobox } from "@/components/ui/combobox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 
 const formSchema = contactValidationSchema.extend({
@@ -38,6 +44,8 @@ interface AddContactDialogProps {
 
 export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) {
   const { toast } = useToast();
+  const [useCustomLabel, setUseCustomLabel] = React.useState(false);
+  const [customLabelValue, setCustomLabelValue] = React.useState("");
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,6 +69,8 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
         description: "The contact was created successfully",
       });
       form.reset();
+      setUseCustomLabel(false);
+      setCustomLabelValue("");
       onOpenChange(false);
     },
     onError: (error: Error) => {
@@ -76,10 +86,19 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
     contactMutation.mutate(values);
   };
 
+  // Apply custom label to form when valid
+  React.useEffect(() => {
+    if (useCustomLabel && customLabelValue.trim()) {
+      form.setValue("label", customLabelValue.trim());
+    }
+  }, [customLabelValue, useCustomLabel, form]);
+
   // Reset form when dialog closes
   React.useEffect(() => {
     if (!open) {
       form.reset();
+      setUseCustomLabel(false);
+      setCustomLabelValue("");
     }
   }, [open, form]);
 
@@ -135,32 +154,88 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                 )}
               />
               
-              <FormField
-                control={form.control}
-                name="label"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Label</FormLabel>
-                    <FormControl>
-                      <Combobox
-                        options={[
-                          { label: "Customer", value: "Customer" },
-                          { label: "Lead", value: "Lead" },
-                          { label: "Subscriber", value: "Subscriber" },
-                          { label: "VIP", value: "VIP" },
-                          { label: "Prospect", value: "Prospect" }
-                        ]}
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Select or add a label"
-                        emptyText="No labels found. Type to create a new one."
-                        allowCustomValue={true}
+              {/* Label Field - Split into two separate sections */}
+              <div className="space-y-4">
+                <FormItem className="space-y-1">
+                  <FormLabel>Label</FormLabel>
+                  
+                  <div className="flex space-x-2 mb-2">
+                    <Button 
+                      type="button"
+                      size="sm"
+                      variant={!useCustomLabel ? "default" : "outline"}
+                      onClick={() => setUseCustomLabel(false)}
+                    >
+                      Predefined
+                    </Button>
+                    <Button 
+                      type="button"
+                      size="sm"
+                      variant={useCustomLabel ? "default" : "outline"}
+                      onClick={() => setUseCustomLabel(true)}
+                    >
+                      Custom
+                    </Button>
+                  </div>
+                </FormItem>
+                
+                {!useCustomLabel ? (
+                  <FormField
+                    control={form.control}
+                    name="label"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a label" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Customer">Customer</SelectItem>
+                              <SelectItem value="Lead">Lead</SelectItem>
+                              <SelectItem value="Subscriber">Subscriber</SelectItem>
+                              <SelectItem value="VIP">VIP</SelectItem>
+                              <SelectItem value="Prospect">Prospect</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex space-x-2">
+                      <Input
+                        placeholder="Enter custom label"
+                        value={customLabelValue}
+                        onChange={(e) => setCustomLabelValue(e.target.value)}
+                        className="flex-1"
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                      <Button 
+                        type="button" 
+                        size="sm"
+                        onClick={() => {
+                          if (customLabelValue.trim()) {
+                            form.setValue("label", customLabelValue.trim());
+                          }
+                        }}
+                        disabled={!customLabelValue.trim()}
+                      >
+                        Apply
+                      </Button>
+                    </div>
+                    {form.formState.errors.label && (
+                      <p className="text-sm font-medium text-destructive">
+                        {form.formState.errors.label.message}
+                      </p>
+                    )}
+                  </div>
                 )}
-              />
+              </div>
             </div>
             
             <DialogFooter>

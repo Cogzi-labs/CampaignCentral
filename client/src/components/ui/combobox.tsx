@@ -45,6 +45,8 @@ export function Combobox({
   // Find if current value matches any option
   const selectedOption = options.find((option) => option.value === value)
 
+  console.log("Combobox props:", { options, value, allowCustomValue, showCustomInput });
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -90,13 +92,14 @@ export function Combobox({
               ))}
             </CommandGroup>
             
-            {allowCustomValue && (
+            {allowCustomValue === true && (
               <>
                 <CommandSeparator />
                 <CommandGroup>
                   {!showCustomInput ? (
                     <CommandItem
                       onSelect={() => {
+                        console.log("Add custom value clicked");
                         setShowCustomInput(true);
                       }}
                     >
