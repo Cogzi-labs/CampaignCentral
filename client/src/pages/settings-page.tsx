@@ -33,21 +33,30 @@ export default function SettingsPage() {
     facebookAccessToken: ''
   });
   
+  // Settings type definition
+  interface SettingsData {
+    id: number;
+    accountId: number;
+    wabaid: string | null;
+    facebookAccessToken: string | null;
+    updatedAt: string;
+  }
+
   // Fetch current settings
   const { 
     data: settings, 
     isLoading: settingsLoading 
-  } = useQuery({
+  } = useQuery<SettingsData>({
     queryKey: ["/api/settings"],
-    queryFn: getQueryFn({ on401: "throw" }),
+    queryFn: getQueryFn<SettingsData>({ on401: "throw" }),
   });
 
   // Update local state when settings data is loaded
   React.useEffect(() => {
     if (settings) {
       setWhatsappSettings({
-        wabaid: settings.wabaid || '',
-        facebookAccessToken: settings.facebookAccessToken || ''
+        wabaid: settings.wabaid ? settings.wabaid : '',
+        facebookAccessToken: settings.facebookAccessToken ? settings.facebookAccessToken : ''
       });
     }
   }, [settings]);
