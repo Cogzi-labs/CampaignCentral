@@ -65,10 +65,30 @@ npm install
 #### 4. Configure environment variables
 Create a `.env` file in the root directory with the following variables:
 ```
+# Database Configuration
 DATABASE_URL=postgresql://<username>:<password>@<host>:<port>/<database>
+PGHOST=<host>
+PGPORT=<port>
+PGUSER=<username>
+PGPASSWORD=<password>
+PGDATABASE=<database>
+
+# Session Configuration
 SESSION_SECRET=your_secret_key_here
 PORT=5000
+
+# AWS SES Email Configuration (if using password reset functionality)
+SES_USERNAME=your_aws_access_key_id
+SES_PASSWORD=your_aws_secret_access_key
+SES_REGION=ap-south-1
+SES_SENDER=your_verified_email@example.com
 ```
+
+Important notes:
+- The `.env` file must be in the project's root directory
+- Make sure no spaces are present around the equal sign (=)
+- Do not use quotes around values
+- You can reference the included `.env.example` file for a template
 
 #### 5. Run database migrations
 ```bash
@@ -83,10 +103,16 @@ npm run build
 
 #### 7. Start the server
 ```bash
-# RECOMMENDED: Use our custom production runner (avoids all Vite config issues)
+# RECOMMENDED FOR PRODUCTION: Use our custom production runner (avoids all Vite config issues)
 ./run-prod.sh
 
+# RECOMMENDED FOR ENVIRONMENT VARIABLES ISSUES: Explicitly loads .env variables
+./start-env.sh
+
 # Alternative methods:
+# Simple start script with minimal complexity
+./simple-start.sh 
+
 # Using npm start (may have issues with Vite config)
 npm start
 
@@ -139,8 +165,17 @@ npm run dev
   
   These scripts bypass Vite config loading issues by using a temporary JS configuration.
   
+- If you encounter environment variable loading issues:
+  ```bash
+  # Use our environment-focused script
+  ./start-env.sh
+  ```
+  
+  This script explicitly loads the variables from your .env file before starting the application.
+  
 - For other deployment issues, we provide alternative scripts:
-  - Simple start script: `./start-prod.sh`
+  - Simple start script with minimal complexity: `./simple-start.sh`
+  - Basic start script: `./start-prod.sh`
   - Detailed logging: `./start.sh` 
   - Windows environments: `node start.js`
   
