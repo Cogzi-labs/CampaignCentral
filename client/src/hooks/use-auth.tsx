@@ -34,6 +34,7 @@ type RegisterData = {
   username: string;
   password: string;
   name: string;
+  email: string;
   accountId: number;
 };
 

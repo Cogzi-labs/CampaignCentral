@@ -20,6 +20,7 @@ const loginSchema = z.object({
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   username: z.string().min(3, "Username must be at least 3 characters"),
+  email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string().min(6, "Confirm password is required"),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -44,6 +45,7 @@ export default function AuthPage() {
     defaultValues: {
       name: "",
       username: "",
+      email: "",
       password: "",
       confirmPassword: "",
     },
@@ -58,6 +60,7 @@ export default function AuthPage() {
     registerMutation.mutate({
       name: values.name,
       username: values.username,
+      email: values.email,
       password: values.password,
       accountId: 1,
     });
@@ -178,6 +181,20 @@ export default function AuthPage() {
                             <FormLabel>Username</FormLabel>
                             <FormControl>
                               <Input placeholder="johndoe" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={registerForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="john.doe@example.com" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
