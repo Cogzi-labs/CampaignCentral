@@ -101,7 +101,9 @@ export default function AnalyticsPage() {
         sent: 0,
         delivered: 0,
         read: 0,
-        optout: 0
+        optout: 0,
+        hold: 0,
+        failed: 0
       };
       
       const deliveryRate = campaignAnalytics.sent > 0 
@@ -115,12 +117,22 @@ export default function AnalyticsPage() {
       const optoutRate = campaignAnalytics.sent > 0 
         ? (campaignAnalytics.optout / campaignAnalytics.sent) * 100 
         : 0;
+        
+      const holdRate = campaignAnalytics.sent > 0 
+        ? (campaignAnalytics.hold / campaignAnalytics.sent) * 100 
+        : 0;
+        
+      const failedRate = campaignAnalytics.sent > 0 
+        ? (campaignAnalytics.failed / campaignAnalytics.sent) * 100 
+        : 0;
       
       return {
         name: campaign.name,
         deliveryRate: Math.round(deliveryRate * 10) / 10,
         readRate: Math.round(readRate * 10) / 10,
         optoutRate: Math.round(optoutRate * 10) / 10,
+        holdRate: Math.round(holdRate * 10) / 10,
+        failedRate: Math.round(failedRate * 10) / 10,
       };
     });
   }, [campaigns, analytics]);
@@ -163,7 +175,9 @@ export default function AnalyticsPage() {
         sent: 0,
         delivered: 0,
         read: 0,
-        optout: 0
+        optout: 0,
+        hold: 0,
+        failed: 0
       };
       
       const deliveryRate = campaignAnalytics.sent > 0 
@@ -177,6 +191,14 @@ export default function AnalyticsPage() {
       const optoutRate = campaignAnalytics.sent > 0 
         ? (campaignAnalytics.optout / campaignAnalytics.sent) * 100 
         : 0;
+        
+      const holdRate = campaignAnalytics.sent > 0 
+        ? (campaignAnalytics.hold / campaignAnalytics.sent) * 100 
+        : 0;
+        
+      const failedRate = campaignAnalytics.sent > 0 
+        ? (campaignAnalytics.failed / campaignAnalytics.sent) * 100 
+        : 0;
       
       return {
         ...campaign,
@@ -184,6 +206,8 @@ export default function AnalyticsPage() {
         deliveryRate,
         readRate,
         optoutRate,
+        holdRate,
+        failedRate,
       };
     });
     
@@ -476,6 +500,12 @@ export default function AnalyticsPage() {
                   Opt-out Rate
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Hold Rate
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Failed Rate
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date
                 </th>
               </tr>
@@ -489,12 +519,14 @@ export default function AnalyticsPage() {
                     <td className="px-6 py-4"><Skeleton className="h-5 w-24" /></td>
                     <td className="px-6 py-4"><Skeleton className="h-5 w-24" /></td>
                     <td className="px-6 py-4"><Skeleton className="h-5 w-24" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-5 w-24" /></td>
+                    <td className="px-6 py-4"><Skeleton className="h-5 w-24" /></td>
                     <td className="px-6 py-4"><Skeleton className="h-5 w-20" /></td>
                   </tr>
                 ))
               ) : topCampaigns.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                     No campaign data available
                   </td>
                 </tr>
