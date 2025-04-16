@@ -64,24 +64,27 @@ export default function AnalyticsPage() {
   const totalCampaigns = campaigns.length;
   const activeCampaigns = campaigns.filter((c: any) => c.status === "active").length;
   
-  // Calculate average open rate
-  let avgOpenRate = 0;
-  let avgClickRate = 0;
-  let openRateChange = 0;
-  let clickRateChange = 0;
+  // Calculate average delivery, read and optout rates
+  let avgDeliveryRate = 0;
+  let avgReadRate = 0;
+  let avgOptoutRate = 0;
+  let deliveryRateChange = 0;
+  let readRateChange = 0;
   
   if (analytics.length > 0) {
     const totalSent = analytics.reduce((sum: number, item: any) => sum + item.sent, 0);
-    const totalOpened = analytics.reduce((sum: number, item: any) => sum + item.opened, 0);
-    const totalClicked = analytics.reduce((sum: number, item: any) => sum + item.clicked, 0);
+    const totalDelivered = analytics.reduce((sum: number, item: any) => sum + item.delivered, 0);
+    const totalRead = analytics.reduce((sum: number, item: any) => sum + item.read, 0);
+    const totalOptout = analytics.reduce((sum: number, item: any) => sum + item.optout, 0);
     
     if (totalSent > 0) {
-      avgOpenRate = Math.round((totalOpened / totalSent) * 100 * 10) / 10;
-      avgClickRate = Math.round((totalClicked / totalSent) * 100 * 10) / 10;
+      avgDeliveryRate = Math.round((totalDelivered / totalSent) * 100 * 10) / 10;
+      avgReadRate = Math.round((totalRead / totalSent) * 100 * 10) / 10;
+      avgOptoutRate = Math.round((totalOptout / totalSent) * 100 * 10) / 10;
       
       // For demo purposes, assume small changes
-      openRateChange = 2.3;
-      clickRateChange = -0.8;
+      deliveryRateChange = 1.2;
+      readRateChange = -0.8;
     }
   }
   
@@ -90,28 +93,28 @@ export default function AnalyticsPage() {
     return campaigns.slice(0, 5).map((campaign: any) => {
       const campaignAnalytics = analytics.find((a: any) => a.campaignId === campaign.id) || {
         sent: 0,
-        opened: 0,
-        clicked: 0,
-        converted: 0
+        delivered: 0,
+        read: 0,
+        optout: 0
       };
       
-      const openRate = campaignAnalytics.sent > 0 
-        ? (campaignAnalytics.opened / campaignAnalytics.sent) * 100 
+      const deliveryRate = campaignAnalytics.sent > 0 
+        ? (campaignAnalytics.delivered / campaignAnalytics.sent) * 100 
         : 0;
         
-      const clickRate = campaignAnalytics.sent > 0 
-        ? (campaignAnalytics.clicked / campaignAnalytics.sent) * 100 
+      const readRate = campaignAnalytics.sent > 0 
+        ? (campaignAnalytics.read / campaignAnalytics.sent) * 100 
         : 0;
         
-      const conversionRate = campaignAnalytics.sent > 0 
-        ? (campaignAnalytics.converted / campaignAnalytics.sent) * 100 
+      const optoutRate = campaignAnalytics.sent > 0 
+        ? (campaignAnalytics.optout / campaignAnalytics.sent) * 100 
         : 0;
       
       return {
         name: campaign.name,
-        openRate: Math.round(openRate * 10) / 10,
-        clickRate: Math.round(clickRate * 10) / 10,
-        conversionRate: Math.round(conversionRate * 10) / 10,
+        deliveryRate: Math.round(deliveryRate * 10) / 10,
+        readRate: Math.round(readRate * 10) / 10,
+        optoutRate: Math.round(optoutRate * 10) / 10,
       };
     });
   }, [campaigns, analytics]);
@@ -263,11 +266,11 @@ export default function AnalyticsPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Average Open Rate</p>
+                <p className="text-gray-500 text-sm">Delivery Rate</p>
                 {analyticsLoading ? (
                   <Skeleton className="h-8 w-16 mt-1" />
                 ) : (
-                  <p className="text-2xl font-semibold text-gray-800">{avgOpenRate}%</p>
+                  <p className="text-2xl font-semibold text-gray-800">{avgDeliveryRate}%</p>
                 )}
               </div>
               <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -279,7 +282,7 @@ export default function AnalyticsPage() {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
                 </svg>
-                {openRateChange}%
+                {deliveryRateChange}%
               </span>
               <span className="text-gray-500 ml-2">from last period</span>
             </div>
@@ -290,11 +293,11 @@ export default function AnalyticsPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Average Click Rate</p>
+                <p className="text-gray-500 text-sm">Read Rate</p>
                 {analyticsLoading ? (
                   <Skeleton className="h-8 w-16 mt-1" />
                 ) : (
-                  <p className="text-2xl font-semibold text-gray-800">{avgClickRate}%</p>
+                  <p className="text-2xl font-semibold text-gray-800">{avgReadRate}%</p>
                 )}
               </div>
               <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
@@ -306,7 +309,7 @@ export default function AnalyticsPage() {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                {Math.abs(clickRateChange)}%
+                {Math.abs(readRateChange)}%
               </span>
               <span className="text-gray-500 ml-2">from last period</span>
             </div>
@@ -342,9 +345,9 @@ export default function AnalyticsPage() {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="openRate" name="Open Rate %" fill="#3B82F6" />
-                    <Bar dataKey="clickRate" name="Click Rate %" fill="#10B981" />
-                    <Bar dataKey="conversionRate" name="Conversion Rate %" fill="#8B5CF6" />
+                    <Bar dataKey="deliveryRate" name="Delivery Rate %" fill="#3B82F6" />
+                    <Bar dataKey="readRate" name="Read Rate %" fill="#10B981" />
+                    <Bar dataKey="optoutRate" name="Opt-out Rate %" fill="#8B5CF6" />
                   </BarChart>
                 </ResponsiveContainer>
               )}

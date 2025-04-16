@@ -358,9 +358,9 @@ export class DatabaseStorage implements IStorage {
     await this.createOrUpdateAnalytics({
       campaignId: id,
       sent: 0,
-      opened: 0,
-      clicked: 0,
-      converted: 0,
+      delivered: 0,
+      read: 0,
+      optout: 0,
       accountId: result[0].accountId
     });
     
@@ -400,9 +400,9 @@ export class DatabaseStorage implements IStorage {
           ...insertAnalytics,
           updatedAt: new Date(),
           sent: insertAnalytics.sent ?? existing[0].sent,
-          opened: insertAnalytics.opened ?? existing[0].opened,
-          clicked: insertAnalytics.clicked ?? existing[0].clicked,
-          converted: insertAnalytics.converted ?? existing[0].converted
+          delivered: insertAnalytics.delivered ?? existing[0].delivered,
+          read: insertAnalytics.read ?? existing[0].read,
+          optout: insertAnalytics.optout ?? existing[0].optout
         })
         .where(eq(analytics.id, existing[0].id))
         .returning();
@@ -416,9 +416,9 @@ export class DatabaseStorage implements IStorage {
         ...insertAnalytics, 
         updatedAt: new Date(),
         sent: insertAnalytics.sent || 0,
-        opened: insertAnalytics.opened || 0,
-        clicked: insertAnalytics.clicked || 0,
-        converted: insertAnalytics.converted || 0
+        delivered: insertAnalytics.delivered || 0,
+        read: insertAnalytics.read || 0,
+        optout: insertAnalytics.optout || 0
       })
       .returning();
     return result[0];
@@ -712,9 +712,9 @@ export class MemStorage implements IStorage {
     await this.createOrUpdateAnalytics({
       campaignId: id,
       sent: 0,
-      opened: 0,
-      clicked: 0,
-      converted: 0,
+      delivered: 0,
+      read: 0,
+      optout: 0,
       accountId: campaign.accountId
     });
     
@@ -746,9 +746,9 @@ export class MemStorage implements IStorage {
         ...insertAnalytics,
         updatedAt: new Date(),
         sent: insertAnalytics.sent ?? existing.sent,
-        opened: insertAnalytics.opened ?? existing.opened,
-        clicked: insertAnalytics.clicked ?? existing.clicked,
-        converted: insertAnalytics.converted ?? existing.converted
+        delivered: insertAnalytics.delivered ?? existing.delivered,
+        read: insertAnalytics.read ?? existing.read,
+        optout: insertAnalytics.optout ?? existing.optout
       };
       this.analyticsData.set(existing.id, updated);
       return updated;
@@ -762,9 +762,9 @@ export class MemStorage implements IStorage {
       id, 
       updatedAt,
       sent: insertAnalytics.sent || 0,
-      opened: insertAnalytics.opened || 0,
-      clicked: insertAnalytics.clicked || 0,
-      converted: insertAnalytics.converted || 0
+      delivered: insertAnalytics.delivered || 0,
+      read: insertAnalytics.read || 0,
+      optout: insertAnalytics.optout || 0
     };
     this.analyticsData.set(id, analytics);
     return analytics;
