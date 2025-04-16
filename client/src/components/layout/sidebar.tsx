@@ -16,25 +16,24 @@ interface SidebarItemProps extends React.HTMLAttributes<HTMLAnchorElement> {
 
 const SidebarItem = ({ href, icon, children, isActive, className, ...props }: SidebarItemProps) => {
   return (
-    <Link href={href}>
-      <a
-        className={cn(
-          "flex items-center px-4 py-3 text-sm",
-          isActive 
-            ? "bg-blue-50 text-primary font-medium border-l-4 border-primary" 
-            : "text-gray-700 hover:bg-gray-50 border-l-4 border-transparent",
-          className
-        )}
-        onClick={(e) => {
-          if (props.onClick) props.onClick(e);
-        }}
-        {...props}
-      >
-        <span className={cn("mr-3", isActive ? "text-primary" : "text-gray-500")}>
-          {icon}
-        </span>
-        {children}
-      </a>
+    <Link 
+      href={href}
+      className={cn(
+        "flex items-center px-4 py-3 text-sm",
+        isActive 
+          ? "bg-blue-50 text-primary font-medium border-l-4 border-primary" 
+          : "text-gray-700 hover:bg-gray-50 border-l-4 border-transparent",
+        className
+      )}
+      onClick={(e) => {
+        if (props.onClick) props.onClick(e);
+      }}
+      {...props}
+    >
+      <span className={cn("mr-3", isActive ? "text-primary" : "text-gray-500")}>
+        {icon}
+      </span>
+      {children}
     </Link>
   );
 };

@@ -48,8 +48,7 @@ export function Header({ onMenuClick }: HeaderProps) {
             <span className="sr-only">Toggle menu</span>
           </Button>
           
-          <Link href="/">
-            <a className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2">
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
                 viewBox="0 0 24 24" 
@@ -63,7 +62,6 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
               </svg>
               <span className="font-semibold text-xl text-gray-800">CampaignHub</span>
-            </a>
           </Link>
         </div>
         

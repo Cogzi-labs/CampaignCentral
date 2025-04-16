@@ -65,6 +65,7 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
   
   // Extract unique labels from contacts
   const uniqueLabels = React.useMemo(() => {
+    if (!Array.isArray(contacts)) return [];
     const labels = contacts.map((contact: any) => contact.label);
     return Array.from(new Set(labels.filter(Boolean)));
   }, [contacts]);
@@ -155,11 +156,11 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {templates.map((template: any) => (
-                        <SelectItem key={template.id} value={template.id}>
+                      {Array.isArray(templates) ? templates.map((template: any) => (
+                        <SelectItem key={template.id || `template-${template.name}`} value={template.id || `id-${template.name}`}>
                           {template.name}
                         </SelectItem>
-                      ))}
+                      )) : null}
                     </SelectContent>
                   </Select>
                   <FormMessage />
