@@ -1,7 +1,11 @@
 import AWS from 'aws-sdk';
 import { log } from './vite';
+import dotenv from 'dotenv';
 
-// Get the environment variables directly from the process
+// Ensure environment variables are loaded
+dotenv.config();
+
+// Get credentials directly from environment
 const SES_USERNAME = process.env.SES_USERNAME || '';
 const SES_PASSWORD = process.env.SES_PASSWORD || '';
 const SES_SENDER = process.env.SES_SENDER || '';
