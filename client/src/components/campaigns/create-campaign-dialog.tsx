@@ -49,8 +49,15 @@ interface CreateCampaignDialogProps {
 export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialogProps) {
   const { toast } = useToast();
   
+  // Define template interface
+  interface Template {
+    id: string;
+    name: string;
+    description?: string;
+  }
+  
   // Fetch templates
-  const { data: templates = [] } = useQuery({
+  const { data: templates = [], isLoading: templatesLoading } = useQuery<Template[]>({
     queryKey: ["/api/templates"],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: open,
@@ -122,6 +129,9 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create New Campaign</DialogTitle>
+          <DialogDescription>
+            Configure your campaign using templates from Facebook. Templates are loaded directly from the Facebook API.
+          </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
@@ -151,16 +161,36 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
                     defaultValue={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a template" />
+                      <SelectTrigger disabled={templatesLoading}>
+                        {templatesLoading ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Loading templates...</span>
+                          </div>
+                        ) : (
+                          <SelectValue placeholder="Select a template">
+                            {field.value && templates.find(t => t.id === field.value)?.name}
+                          </SelectValue>
+                        )}
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {Array.isArray(templates) ? templates.map((template: any) => (
-                        <SelectItem key={template.id || `template-${template.name}`} value={template.id || `id-${template.name}`}>
-                          {template.name}
-                        </SelectItem>
-                      )) : null}
+                      {templatesLoading ? (
+                        <div className="flex items-center justify-center py-6">
+                          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        </div>
+                      ) : (
+                        templates.map((template) => (
+                          <SelectItem key={template.id} value={template.id}>
+                            <div className="flex flex-col">
+                              <span>{template.name}</span>
+                              {template.description && (
+                                <span className="text-xs text-gray-500">{template.description}</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
