@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { useAuth } from "@/hooks/use-auth";
-import { Redirect } from "wouter";
+import { Redirect, Link } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -130,6 +130,14 @@ export default function AuthPage() {
                           </FormItem>
                         )}
                       />
+                      
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center">
+                          <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                            Forgot password?
+                          </Link>
+                        </div>
+                      </div>
                       
                       <Button 
                         type="submit" 
