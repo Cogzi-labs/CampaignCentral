@@ -367,10 +367,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/templates/contact-csv", (req, res) => {
     try {
       const filePath = path.join(process.cwd(), 'uploads', 'sample_contacts_template.csv');
+      const csvContent = fs.readFileSync(filePath, 'utf8');
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', 'attachment; filename=sample_contacts_template.csv');
-      res.sendFile(filePath);
+      res.status(200).send(csvContent);
     } catch (error) {
+      console.error("Error serving CSV template:", error);
       res.status(500).json({ message: "Error fetching CSV template", error: (error as Error).message });
     }
   });

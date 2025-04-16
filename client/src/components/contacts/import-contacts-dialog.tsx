@@ -134,7 +134,32 @@ export function ImportContactsDialog({ open, onOpenChange }: ImportContactsDialo
           <div className="mt-2">
             <button 
               onClick={() => {
-                window.open('/api/templates/contact-csv', '_blank');
+                fetch('/api/templates/contact-csv')
+                  .then(response => response.blob())
+                  .then(blob => {
+                    // Create a temporary link element
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'sample_contacts_template.csv';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    toast({
+                      title: "Template downloaded",
+                      description: "Sample CSV template has been downloaded.",
+                    });
+                  })
+                  .catch(error => {
+                    toast({
+                      title: "Download failed",
+                      description: "Failed to download template file.",
+                      variant: "destructive",
+                    });
+                  });
               }}
               className="inline-flex items-center text-primary hover:text-blue-700 font-medium text-sm"
               type="button"
