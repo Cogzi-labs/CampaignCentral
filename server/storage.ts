@@ -1,13 +1,18 @@
 import { users, type User, type InsertUser, contacts, type Contact, type InsertContact, campaigns, type Campaign, type InsertCampaign, analytics, type Analytics, type InsertAnalytics } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import connectPgSimple from "connect-pg-simple";
+import { db } from "./db";
+import { eq, and, like, gte, or, desc } from "drizzle-orm";
+import { pool } from "./db";
 
 const MemoryStore = createMemoryStore(session);
+const PostgresStore = connectPgSimple(session);
 
 // Define the storage interface
 export interface IStorage {
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: session.Store;
   
   // User methods
   getUser(id: number): Promise<User | undefined>;
@@ -50,13 +55,358 @@ export interface CampaignFilters {
   dateRange?: string;
 }
 
-// In-memory storage implementation
+// Database storage implementation
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.Store;
+
+  constructor() {
+    this.sessionStore = new PostgresStore({ 
+      pool, 
+      createTableIfMissing: true
+    });
+  }
+
+  // USER METHODS
+  async getUser(id: number): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result.length > 0 ? result[0] : undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.username, username));
+    return result.length > 0 ? result[0] : undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const result = await db
+      .insert(users)
+      .values({ ...insertUser, createdAt: new Date() })
+      .returning();
+    return result[0];
+  }
+
+  // CONTACT METHODS
+  async getContacts(accountId: number, filters?: ContactFilters): Promise<Contact[]> {
+    let query = db.select().from(contacts).where(eq(contacts.accountId, accountId));
+    
+    if (filters) {
+      if (filters.search) {
+        const searchTerm = `%${filters.search}%`;
+        // Apply search filters
+        const searchResults = await db.select().from(contacts)
+          .where(
+            and(
+              eq(contacts.accountId, accountId),
+              or(
+                like(contacts.name, searchTerm),
+                like(contacts.mobile, searchTerm)
+              )
+            )
+          );
+        return searchResults;
+      }
+      
+      if (filters.label) {
+        // Apply label filter
+        const labelResults = await db.select().from(contacts)
+          .where(
+            and(
+              eq(contacts.accountId, accountId),
+              eq(contacts.label, filters.label)
+            )
+          );
+        return labelResults;
+      }
+      
+      if (filters.location) {
+        // Apply location filter
+        const locationResults = await db.select().from(contacts)
+          .where(
+            and(
+              eq(contacts.accountId, accountId),
+              eq(contacts.location, filters.location)
+            )
+          );
+        return locationResults;
+      }
+      
+      if (filters.dateRange) {
+        const now = new Date();
+        let startDate = new Date();
+        
+        switch (filters.dateRange) {
+          case 'today':
+            startDate.setHours(0, 0, 0, 0);
+            break;
+          case 'last-week':
+            startDate.setDate(now.getDate() - 7);
+            break;
+          case 'last-month':
+            startDate.setMonth(now.getMonth() - 1);
+            break;
+          case 'last-year':
+            startDate.setFullYear(now.getFullYear() - 1);
+            break;
+        }
+        
+        // Apply date range filter
+        const dateResults = await db.select().from(contacts)
+          .where(
+            and(
+              eq(contacts.accountId, accountId),
+              gte(contacts.createdAt, startDate)
+            )
+          );
+        return dateResults;
+      }
+    }
+    
+    // Default query with no filters
+    const results = await query;
+    return results;
+  }
+
+  async getContactById(id: number): Promise<Contact | undefined> {
+    const result = await db.select().from(contacts).where(eq(contacts.id, id));
+    return result.length > 0 ? result[0] : undefined;
+  }
+
+  async getContactByMobile(mobile: string, accountId: number): Promise<Contact | undefined> {
+    const result = await db.select()
+      .from(contacts)
+      .where(
+        and(
+          eq(contacts.mobile, mobile),
+          eq(contacts.accountId, accountId)
+        )
+      );
+    return result.length > 0 ? result[0] : undefined;
+  }
+
+  async createContact(insertContact: InsertContact): Promise<Contact> {
+    const result = await db
+      .insert(contacts)
+      .values({ 
+        ...insertContact, 
+        location: insertContact.location || null,
+        label: insertContact.label || null,
+        createdAt: new Date() 
+      })
+      .returning();
+    return result[0];
+  }
+
+  async updateContact(id: number, updateData: Partial<InsertContact>): Promise<Contact | undefined> {
+    const result = await db
+      .update(contacts)
+      .set(updateData)
+      .where(eq(contacts.id, id))
+      .returning();
+    return result.length > 0 ? result[0] : undefined;
+  }
+
+  async deleteContact(id: number): Promise<boolean> {
+    const result = await db.delete(contacts).where(eq(contacts.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async importContacts(contactsList: InsertContact[], deduplicateByMobile: boolean): Promise<{ imported: number, duplicates: number }> {
+    let imported = 0;
+    let duplicates = 0;
+    
+    for (const contact of contactsList) {
+      if (deduplicateByMobile) {
+        const existing = await this.getContactByMobile(contact.mobile, contact.accountId);
+        if (existing) {
+          duplicates++;
+          continue;
+        }
+      }
+      
+      await this.createContact(contact);
+      imported++;
+    }
+    
+    return { imported, duplicates };
+  }
+
+  // CAMPAIGN METHODS
+  async getCampaigns(accountId: number, filters?: CampaignFilters): Promise<Campaign[]> {
+    let query = db.select().from(campaigns).where(eq(campaigns.accountId, accountId));
+    
+    if (filters) {
+      if (filters.search) {
+        const searchTerm = `%${filters.search}%`;
+        // Apply search filters
+        const searchResults = await db.select().from(campaigns)
+          .where(
+            and(
+              eq(campaigns.accountId, accountId),
+              like(campaigns.name, searchTerm)
+            )
+          );
+        return searchResults;
+      }
+      
+      if (filters.status) {
+        // Apply status filter
+        const statusResults = await db.select().from(campaigns)
+          .where(
+            and(
+              eq(campaigns.accountId, accountId),
+              eq(campaigns.status, filters.status)
+            )
+          );
+        return statusResults;
+      }
+      
+      if (filters.dateRange) {
+        const now = new Date();
+        let startDate = new Date();
+        
+        switch (filters.dateRange) {
+          case 'today':
+            startDate.setHours(0, 0, 0, 0);
+            break;
+          case 'last-week':
+            startDate.setDate(now.getDate() - 7);
+            break;
+          case 'last-month':
+            startDate.setMonth(now.getMonth() - 1);
+            break;
+          case 'last-year':
+            startDate.setFullYear(now.getFullYear() - 1);
+            break;
+        }
+        
+        // Apply date range filter
+        const dateResults = await db.select().from(campaigns)
+          .where(
+            and(
+              eq(campaigns.accountId, accountId),
+              gte(campaigns.createdAt, startDate)
+            )
+          );
+        return dateResults;
+      }
+    }
+    
+    // Default query with no filters
+    const results = await query;
+    return results;
+  }
+
+  async getCampaignById(id: number): Promise<Campaign | undefined> {
+    const result = await db.select().from(campaigns).where(eq(campaigns.id, id));
+    return result.length > 0 ? result[0] : undefined;
+  }
+
+  async createCampaign(insertCampaign: InsertCampaign): Promise<Campaign> {
+    const result = await db
+      .insert(campaigns)
+      .values({ 
+        ...insertCampaign, 
+        contactLabel: insertCampaign.contactLabel || null,
+        status: "draft", 
+        createdAt: new Date() 
+      })
+      .returning();
+    return result[0];
+  }
+
+  async updateCampaign(id: number, updateData: Partial<InsertCampaign>): Promise<Campaign | undefined> {
+    const result = await db
+      .update(campaigns)
+      .set(updateData)
+      .where(eq(campaigns.id, id))
+      .returning();
+    return result.length > 0 ? result[0] : undefined;
+  }
+
+  async deleteCampaign(id: number): Promise<boolean> {
+    const result = await db.delete(campaigns).where(eq(campaigns.id, id)).returning();
+    return result.length > 0;
+  }
+  
+  async launchCampaign(id: number): Promise<boolean> {
+    const result = await db
+      .update(campaigns)
+      .set({ status: "active" })
+      .where(eq(campaigns.id, id))
+      .returning();
+    
+    if (result.length === 0) return false;
+    
+    // Create initial analytics entry
+    await this.createOrUpdateAnalytics({
+      campaignId: id,
+      sent: 0,
+      opened: 0,
+      clicked: 0,
+      converted: 0,
+      accountId: result[0].accountId
+    });
+    
+    return true;
+  }
+
+  // ANALYTICS METHODS
+  async getAnalytics(accountId: number, campaignId?: number): Promise<Analytics[]> {
+    if (campaignId) {
+      const result = await db.select().from(analytics)
+        .where(
+          and(
+            eq(analytics.accountId, accountId),
+            eq(analytics.campaignId, campaignId)
+          )
+        );
+      return result;
+    }
+    
+    const result = await db.select().from(analytics)
+      .where(eq(analytics.accountId, accountId));
+    return result;
+  }
+
+  async createOrUpdateAnalytics(insertAnalytics: InsertAnalytics): Promise<Analytics> {
+    // Check if we already have analytics for this campaign
+    const existing = await db
+      .select()
+      .from(analytics)
+      .where(eq(analytics.campaignId, insertAnalytics.campaignId));
+    
+    if (existing.length > 0) {
+      // Update existing analytics
+      const result = await db
+        .update(analytics)
+        .set({ 
+          ...insertAnalytics,
+          updatedAt: new Date()
+        })
+        .where(eq(analytics.id, existing[0].id))
+        .returning();
+      return result[0];
+    }
+    
+    // Create new analytics
+    const result = await db
+      .insert(analytics)
+      .values({ 
+        ...insertAnalytics, 
+        updatedAt: new Date() 
+      })
+      .returning();
+    return result[0];
+  }
+}
+
+// In-memory storage implementation for local development
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private contacts: Map<number, Contact>;
   private campaigns: Map<number, Campaign>;
   private analyticsData: Map<number, Analytics>;
-  sessionStore: session.SessionStore;
+  sessionStore: session.Store;
   
   private userCurrentId: number;
   private contactCurrentId: number;
@@ -162,7 +512,13 @@ export class MemStorage implements IStorage {
   async createContact(insertContact: InsertContact): Promise<Contact> {
     const id = this.contactCurrentId++;
     const createdAt = new Date();
-    const contact: Contact = { ...insertContact, id, createdAt };
+    const contact: Contact = { 
+      ...insertContact, 
+      id, 
+      createdAt,
+      location: insertContact.location || null,
+      label: insertContact.label || null
+    };
     this.contacts.set(id, contact);
     return contact;
   }
@@ -257,7 +613,8 @@ export class MemStorage implements IStorage {
       ...insertCampaign, 
       id,
       status: "draft", 
-      createdAt
+      createdAt,
+      contactLabel: insertCampaign.contactLabel || null
     };
     this.campaigns.set(id, campaign);
     return campaign;
@@ -328,10 +685,17 @@ export class MemStorage implements IStorage {
     // Create new analytics
     const id = this.analyticsCurrentId++;
     const updatedAt = new Date();
-    const analytics: Analytics = { ...insertAnalytics, id, updatedAt };
+    const analytics: Analytics = { 
+      ...insertAnalytics, 
+      id, 
+      updatedAt
+    };
     this.analyticsData.set(id, analytics);
     return analytics;
   }
 }
 
-export const storage = new MemStorage();
+// Use database storage if DATABASE_URL is provided, otherwise use in-memory storage
+export const storage = process.env.DATABASE_URL 
+  ? new DatabaseStorage() 
+  : new MemStorage();
