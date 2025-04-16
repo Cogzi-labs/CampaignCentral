@@ -32,10 +32,17 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
+    const timestamp = new Date().getTime(); // Add timestamp for cache busting
+    const queryKeyString = queryKey[0] as string;
+    const url = `${queryKeyString}${queryKeyString.includes('?') ? '&' : '?'}_t=${timestamp}`;
+    
+    const res = await fetch(url, {
       credentials: "include",
       headers: {
-        "Accept": "application/json"
+        "Accept": "application/json",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
       },
       // Add a cache-busting parameter to prevent browser caching
       cache: "no-cache"
@@ -55,11 +62,14 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: true,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: false,
+      refetchOnMount: true,
+      staleTime: 30 * 1000, // 30 seconds - reduce stale time for more frequent refreshes
+      retry: 1, // Allow one retry
+      retryDelay: 1000, // 1 second delay before retrying
     },
     mutations: {
-      retry: false,
+      retry: 1, // Allow one retry for mutations too
+      retryDelay: 1000,
     },
   },
 });

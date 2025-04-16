@@ -24,11 +24,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to check authentication for API routes
   const checkAuth = (req: Request, res: Response, next: Function) => {
     if (!req.isAuthenticated()) {
+      // Log the unauthorized attempt with session details
       console.log("Unauthorized access attempt to", req.path, "Session ID:", req.sessionID);
-      return res.status(401).json({ message: "Unauthorized" });
+      
+      // Check if we have a session but no user (possible session timeout or corruption)
+      if (req.session && req.sessionID) {
+        console.log("Session exists but user is not authenticated. Possible session timeout.");
+      }
+      
+      // Return unauthorized status with clear message
+      return res.status(401).json({ 
+        message: "Unauthorized: You must be logged in to access this resource",
+        code: "UNAUTHORIZED" 
+      });
     }
     
-    // User is authenticated, proceed
+    // User is authenticated, refresh the session expiration and proceed
+    if (req.session) {
+      req.session.touch(); // Update the session's "lastAccessed" time
+    }
+    
+    // Log the authorized access
     console.log("Authorized access to", req.path, "User ID:", req.user?.id, "Session ID:", req.sessionID);
     next();
   };

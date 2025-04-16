@@ -5,10 +5,12 @@ import cors from "cors";
 
 const app = express();
 
-// Enable CORS for all routes
+// Enable CORS for all routes with proper settings
 app.use(cors({
-  origin: process.env.NODE_ENV === "development" ? "http://localhost:5000" : true,
-  credentials: true
+  origin: true, // Allow requests from any origin
+  credentials: true, // Allow credentials (cookies, authentication)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Body parsers
