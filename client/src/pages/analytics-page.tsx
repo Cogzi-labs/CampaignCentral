@@ -23,6 +23,7 @@ import { Vote, UsersIcon, EyeIcon, MousePointerClick, BarChart2 } from "lucide-r
 
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = React.useState<string>("last-7-days");
+  const [campaignId, setCampaignId] = React.useState<number | undefined>();
   
   // Fetch analytics data
   const { data: analytics = [], isLoading: analyticsLoading } = useQuery({
@@ -198,15 +199,23 @@ export default function AnalyticsPage() {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => window.open('/api/analytics/export/csv', '_blank')}
+            onClick={() => {
+              const url = `/api/analytics/export/csv${campaignId ? `?campaignId=${campaignId}` : ''}`;
+              window.open(url, '_blank');
+            }}
           >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
             Export CSV
           </Button>
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => window.open('/api/analytics/export/pdf', '_blank')}
+            onClick={() => {
+              const url = `/api/analytics/export/pdf${campaignId ? `?campaignId=${campaignId}` : ''}`;
+              window.open(url, '_blank');
+            }}
           >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
             Export PDF
           </Button>
         </div>
