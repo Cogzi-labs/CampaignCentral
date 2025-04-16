@@ -708,7 +708,7 @@ export class MemStorage implements IStorage {
     const updatedCampaign = { ...campaign, status: "active" };
     this.campaigns.set(id, updatedCampaign);
     
-    // Create initial analytics entry
+    // Create initial analytics entry with default zero values
     await this.createOrUpdateAnalytics({
       campaignId: id,
       sent: 0,

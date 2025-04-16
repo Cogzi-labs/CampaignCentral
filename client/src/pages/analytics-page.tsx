@@ -155,35 +155,35 @@ export default function AnalyticsPage() {
     const campaignsWithAnalytics = campaigns.map((campaign: any) => {
       const campaignAnalytics = analytics.find((a: any) => a.campaignId === campaign.id) || {
         sent: 0,
-        opened: 0,
-        clicked: 0,
-        converted: 0
+        delivered: 0,
+        read: 0,
+        optout: 0
       };
       
-      const openRate = campaignAnalytics.sent > 0 
-        ? (campaignAnalytics.opened / campaignAnalytics.sent) * 100 
+      const deliveryRate = campaignAnalytics.sent > 0 
+        ? (campaignAnalytics.delivered / campaignAnalytics.sent) * 100 
         : 0;
         
-      const clickRate = campaignAnalytics.sent > 0 
-        ? (campaignAnalytics.clicked / campaignAnalytics.sent) * 100 
+      const readRate = campaignAnalytics.sent > 0 
+        ? (campaignAnalytics.read / campaignAnalytics.sent) * 100 
         : 0;
         
-      const conversionRate = campaignAnalytics.sent > 0 
-        ? (campaignAnalytics.converted / campaignAnalytics.sent) * 100 
+      const optoutRate = campaignAnalytics.sent > 0 
+        ? (campaignAnalytics.optout / campaignAnalytics.sent) * 100 
         : 0;
       
       return {
         ...campaign,
         sent: campaignAnalytics.sent,
-        openRate,
-        clickRate,
-        conversionRate,
+        deliveryRate,
+        readRate,
+        optoutRate,
       };
     });
     
-    // Sort by open rate and take top 3
+    // Sort by delivery rate and take top 3
     return campaignsWithAnalytics
-      .sort((a: any, b: any) => b.openRate - a.openRate)
+      .sort((a: any, b: any) => b.deliveryRate - a.deliveryRate)
       .slice(0, 3);
   }, [campaigns, analytics]);
 
@@ -408,13 +408,13 @@ export default function AnalyticsPage() {
                   Sent
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Open Rate
+                  Delivery Rate
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Click Rate
+                  Read Rate
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Conversion Rate
+                  Opt-out Rate
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date
@@ -450,7 +450,7 @@ export default function AnalyticsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <span className="text-gray-900 font-medium">{campaign.openRate.toFixed(1)}%</span>
+                        <span className="text-gray-900 font-medium">{campaign.deliveryRate.toFixed(1)}%</span>
                         <span className="ml-2 text-green-500 flex items-center text-xs">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
@@ -461,7 +461,7 @@ export default function AnalyticsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <span className="text-gray-900 font-medium">{campaign.clickRate.toFixed(1)}%</span>
+                        <span className="text-gray-900 font-medium">{campaign.readRate.toFixed(1)}%</span>
                         <span className="ml-2 text-green-500 flex items-center text-xs">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
@@ -472,10 +472,10 @@ export default function AnalyticsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <span className="text-gray-900 font-medium">{campaign.conversionRate.toFixed(1)}%</span>
-                        <span className="ml-2 text-green-500 flex items-center text-xs">
+                        <span className="text-gray-900 font-medium">{campaign.optoutRate.toFixed(1)}%</span>
+                        <span className="ml-2 text-red-500 flex items-center text-xs">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                            <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                           {(Math.random() * 2).toFixed(1)}%
                         </span>
