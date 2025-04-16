@@ -99,7 +99,7 @@ There are two approaches to set up the database:
 npm install pg
 
 # Run the interactive database initialization script
-node scripts/initialize_database.js
+node scripts/initialize_database.cjs
 ```
 This script will:
 1. Create the database and user with appropriate permissions
@@ -209,6 +209,31 @@ npm run dev
 - If you encounter database connection issues, verify your DATABASE_URL is correct
 - Make sure PostgreSQL is running and accessible
 - Check that the required ports (default: 5432 for PostgreSQL) are not being used by other applications
+- For database initialization issues:
+  ```bash
+  # Check PostgreSQL is running
+  pg_isready -h localhost -p 5432
+  
+  # Verify you can connect as the superuser
+  psql -U postgres -h localhost -p 5432 -c "SELECT version();"
+  
+  # Check if the campaign_management database already exists
+  psql -U postgres -h localhost -p 5432 -l | grep campaign_management
+  
+  # Check if the campaign_manager user already exists
+  psql -U postgres -h localhost -p 5432 -c "SELECT usename FROM pg_user WHERE usename='campaign_manager';"
+  ```
+- If the database or user already exists but has the wrong permissions, you can reinstall:
+  ```bash
+  # Drop the database (caution: this deletes all data!)
+  psql -U postgres -h localhost -p 5432 -c "DROP DATABASE IF EXISTS campaign_management;"
+  
+  # Drop the user
+  psql -U postgres -h localhost -p 5432 -c "DROP USER IF EXISTS campaign_manager;"
+  
+  # Then re-run the initialization script
+  node scripts/initialize_database.cjs
+  ```
 
 ### Production Deployment Issues
 - If you encounter errors loading Vite configuration like:
@@ -304,8 +329,76 @@ npm run dev
 │   └── ...
 ├── shared/                # Shared code between client and server
 │   └── schema.ts          # Database schema definitions
+├── scripts/               # Database initialization and utility scripts
+│   ├── initialize_database.cjs  # Interactive database setup script
+│   ├── setup_db.sql       # Creates database and user
+│   ├── create_tables.sql  # Creates all tables and indexes
+│   └── seed_data.sql      # Inserts default data
 └── ...
 ```
+
+## Database Schema
+
+The Campaign Management System uses a PostgreSQL database with the following tables:
+
+### accounts
+Represents customer accounts that can have multiple users
+- `id`: Primary key
+- `name`: Account name
+- `created_at`: Creation timestamp
+
+### users
+System users who have access to the application
+- `id`: Primary key
+- `username`: Unique username used for login
+- `password`: Bcrypt hashed password
+- `name`: Display name
+- `account_id`: Foreign key to accounts table
+- `created_at`: Creation timestamp
+
+### contacts
+Contact entries that can be used in campaigns
+- `id`: Primary key
+- `name`: Contact name
+- `mobile`: Mobile phone number
+- `location`: Optional location information
+- `label`: Optional category/grouping label
+- `account_id`: Foreign key to accounts table
+- `created_at`: Creation timestamp
+
+### campaigns
+Marketing campaigns created by users
+- `id`: Primary key
+- `name`: Campaign name
+- `template`: WhatsApp template to use
+- `contact_label`: Optional label to filter contacts
+- `status`: Campaign status (draft, scheduled, sent, etc.)
+- `account_id`: Foreign key to accounts table
+- `scheduled_at`: Optional future scheduling timestamp
+- `created_at`: Creation timestamp
+
+### analytics
+Campaign performance metrics
+- `id`: Primary key
+- `campaign_id`: Foreign key to campaigns table
+- `sent`: Count of messages sent
+- `delivered`: Count of messages delivered
+- `read`: Count of messages read
+- `optout`: Count of opt-outs
+- `hold`: Count of messages on hold
+- `failed`: Count of failed messages
+- `account_id`: Foreign key to accounts table
+- `updated_at`: Last update timestamp
+
+### settings
+Account-specific settings, including API configuration
+- `id`: Primary key
+- `account_id`: Foreign key to accounts table
+- `waba_api_url`: WhatsApp Business API URL
+- `facebook_access_token`: API token for Facebook
+- `partner_mobile`: Partner mobile number
+- `waba_id`: WhatsApp Business Account ID
+- `updated_at`: Last update timestamp
 
 ## License
 [MIT](LICENSE)
