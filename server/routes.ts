@@ -788,8 +788,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!emailSent) {
         console.error(`Failed to send password reset email to ${email}`);
         
-        // Check if SendGrid API key is configured
-        if (!process.env.SENDGRID_API_KEY) {
+        // Check if AWS SES credentials are configured
+        if (!process.env.SES_USERNAME || !process.env.SES_PASSWORD || !process.env.SES_SENDER) {
           return res.status(500).json({ 
             message: "Email service not configured. Contact administrator.",
             code: "EMAIL_SERVICE_UNCONFIGURED"
