@@ -6,6 +6,13 @@ import { contactValidationSchema, campaignValidationSchema } from "@shared/schem
 import multer from "multer";
 import { parse } from "csv-parse";
 import fs from "fs";
+import * as path from "path";
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // Set up file upload
 const upload = multer({ dest: 'uploads/' });
