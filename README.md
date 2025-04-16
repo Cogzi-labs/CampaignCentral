@@ -102,6 +102,8 @@ npm run build
 ```
 
 #### 7. Start the server
+
+##### For Linux/Mac:
 ```bash
 # RECOMMENDED FOR PRODUCTION: Use our custom production runner (avoids all Vite config issues)
 ./run-prod.sh
@@ -123,6 +125,24 @@ npm start
 # ./start-prod.sh
 # ./start.sh
 # node start.js
+```
+
+##### For Windows:
+```cmd
+# RECOMMENDED FOR PRODUCTION: Build and run in one step
+run-prod-windows.bat
+
+# Environment variable loading with detailed debugging
+start-windows.bat
+
+# For PowerShell users (better environment variable handling)
+.\start-windows.ps1
+
+# Build only (if you want to build without starting)
+build-windows.bat
+
+# Using npm (may have issues with Vite config)
+npm start
 ```
 
 #### 8. Access the application
@@ -177,7 +197,9 @@ npm run dev
   - Simple start script with minimal complexity: `./simple-start.sh`
   - Basic start script: `./start-prod.sh`
   - Detailed logging: `./start.sh` 
-  - Windows environments: `node start.js`
+  - Cross-platform Node.js script: `node start.js`
+  - Windows batch files: `start-windows.bat`, `run-prod-windows.bat`
+  - Windows PowerShell: `.\start-windows.ps1`
   
 - All our start scripts will:
   - Automatically handle both production and development environments
@@ -191,6 +213,23 @@ npm run dev
   - Node.js version compatibility (v18+ recommended)
   
 - For containerized deployments, use the start-prod.sh script in your entrypoint command
+
+### Windows-Specific Issues
+- If CMD batch files don't work correctly, try the PowerShell script (`start-windows.ps1`)
+- If you get "Permission denied" errors when running PowerShell scripts:
+  1. Open PowerShell as administrator
+  2. Run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
+  3. Try running the script again: `.\start-windows.ps1`
+- Path separators in Windows use backslash (`\`) instead of forward slash (`/`), our Windows scripts handle this automatically
+- If environment variables aren't loading correctly:
+  1. Make sure your .env file doesn't have quotes around values
+  2. Try setting them manually before running: `set DATABASE_URL=your_url` or `$env:DATABASE_URL="your_url"` in PowerShell
+  3. Use our cross-platform environment loader:
+     ```
+     node -r ./load-env.js dist/index.js
+     ```
+     This works on Windows, Mac, and Linux and ensures .env variables are properly loaded
+  4. Restart your terminal after making any changes
 
 ### Email Sending Issues
 - For AWS SES email functionality, make sure these environment variables are set:
