@@ -13,6 +13,7 @@ type AuthContextType = {
   user: SelectUser | null;
   isLoading: boolean;
   error: Error | null;
+  refetchUser: () => Promise<SelectUser | null | undefined>;
   loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
@@ -36,17 +37,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
-  const {
-    data: user,
-    error,
-    isLoading,
-    refetch: refetchUser
-  } = useQuery<SelectUser | null>({
+  const userQuery = useQuery<SelectUser | null>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     retry: 1,
     retryDelay: 1000,
   });
+  
+  const user = userQuery.data;
+  const error = userQuery.error;
+  const isLoading = userQuery.isLoading;
+  const refetchUser = userQuery.refetch;
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
@@ -121,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: user ?? null,
         isLoading,
         error,
+        refetchUser,
         loginMutation,
         logoutMutation,
         registerMutation,
