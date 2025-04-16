@@ -5,17 +5,28 @@ import cors from "cors";
 
 const app = express();
 
-// Enable CORS for all routes with proper settings
+// IMPORTANT: Set trust proxy to handle cookies behind proxies
+app.set('trust proxy', 1);
+
+// Enable CORS for all routes with proper settings for authentication
 app.use(cors({
-  origin: true, // Allow requests from any origin
-  credentials: true, // Allow credentials (cookies, authentication)
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  origin: true, // Allow requests from any origin in development
+  credentials: true, // Critical for cookies/authentication
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Set-Cookie'],
+  maxAge: 600 // Cache preflight requests for 10 minutes
 }));
 
 // Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Add headers that ensure proper cookie handling
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

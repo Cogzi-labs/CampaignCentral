@@ -1,85 +1,135 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser, insertUserSchema } from "@shared/schema";
 
+// Global declaration for TypeScript passport integration
 declare global {
   namespace Express {
     interface User extends SelectUser {}
   }
 }
 
+// Promisify scrypt for async password handling
 const scryptAsync = promisify(scrypt);
 
-async function hashPassword(password: string) {
+/**
+ * Securely hash a password using scrypt with salt
+ */
+async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16).toString("hex");
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
   return `${buf.toString("hex")}.${salt}`;
 }
 
-async function comparePasswords(supplied: string, stored: string) {
+/**
+ * Securely compare stored password hash with supplied password
+ */
+async function comparePasswords(supplied: string, stored: string): Promise<boolean> {
   const [hashed, salt] = stored.split(".");
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
-export function setupAuth(app: Express) {
-  const sessionSecret = process.env.SESSION_SECRET || 'campaign-manager-secret-key';
+// Create a strong session secret
+const generateStrongSecret = (): string => {
+  return randomBytes(32).toString('hex');
+};
+
+/**
+ * Set up authentication for the application
+ */
+export function setupAuth(app: Express): void {
+  // Use environment variable or generate a strong secret
+  const sessionSecret = process.env.SESSION_SECRET || generateStrongSecret();
   
-  // Configure session to be stored properly
+  // Configure session with production-ready settings
   const sessionSettings: session.SessionOptions = {
-    name: 'campaign-session',
+    name: 'campaign_session',
     secret: sessionSecret,
-    resave: false, 
-    saveUninitialized: false, // Only save on successful login
+    resave: false,
+    saveUninitialized: false,
     store: storage.sessionStore,
+    rolling: true, // Reset expiration on every response
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-      secure: process.env.NODE_ENV === 'production', // Set to true only in production with HTTPS
-      httpOnly: true,
-      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours 
+      httpOnly: true, // Prevent JavaScript access
+      sameSite: 'lax', // CSRF protection with reasonable UX
+      secure: process.env.NODE_ENV === 'production', // Secure in production only
       path: '/'
     }
   };
 
-  app.set("trust proxy", 1);
+  // Session handling middleware
   app.use(session(sessionSettings));
+  
+  // Initialize Passport authentication
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Set up local authentication strategy
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
+        // Find user by username
         const user = await storage.getUserByUsername(username);
+        
+        // Verify password if user exists
         if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false);
-        } else {
-          return done(null, user);
+          return done(null, false, { message: "Invalid username or password" });
         }
+        
+        // Authentication successful
+        return done(null, user);
       } catch (err) {
         return done(err);
       }
     }),
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
+  // Serialize user to session
+  passport.serializeUser((user, done) => {
+    // Only store user ID in session
+    done(null, user.id);
+  });
+
+  // Deserialize user from session
   passport.deserializeUser(async (id: number, done) => {
     try {
+      // Retrieve full user object
       const user = await storage.getUser(id);
+      if (!user) {
+        return done(null, false);
+      }
       done(null, user);
     } catch (err) {
       done(err);
     }
   });
 
-  app.post("/api/register", async (req, res, next) => {
+  // Middleware to log authentication state
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    // Only log for API routes to avoid noise
+    if (req.path.startsWith('/api/') && req.path !== '/api/user') {
+      const authStatus = req.isAuthenticated() 
+        ? `User authenticated (ID: ${req.user?.id})` 
+        : 'User not authenticated';
+      console.log(`${req.method} ${req.path}: ${authStatus}, Session: ${req.sessionID}`);
+    }
+    next();
+  });
+
+  /**
+   * User registration endpoint
+   */
+  app.post("/api/register", async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Validate input
+      // Validate input using Zod schema
       const validatedData = insertUserSchema.safeParse(req.body);
       if (!validatedData.success) {
         return res.status(400).json({ 
@@ -88,105 +138,142 @@ export function setupAuth(app: Express) {
         });
       }
       
-      // Check if username exists
+      // Check for existing username
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
-        return res.status(400).json({ message: "Username already exists" });
+        return res.status(409).json({ message: "Username already exists" });
       }
 
-      // Create user with hashed password
+      // Create new user with hashed password
+      const hashedPassword = await hashPassword(req.body.password);
       const user = await storage.createUser({
         ...req.body,
-        password: await hashPassword(req.body.password),
+        password: hashedPassword,
       });
 
-      // Log the user in
+      // Auto-login after registration
       req.login(user, (err) => {
-        if (err) return next(err);
-        res.status(201).json(user);
+        if (err) {
+          return next(err);
+        }
+        
+        // Save session explicitly
+        req.session.save((err) => {
+          if (err) {
+            return next(err);
+          }
+          
+          // Return user data (without password)
+          const { password, ...userWithoutPassword } = user;
+          res.status(201).json(userWithoutPassword);
+        });
       });
     } catch (error) {
       next(error);
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
+  /**
+   * User login endpoint
+   */
+  app.post("/api/login", (req: Request, res: Response, next: NextFunction) => {
+    // Validate request
     if (!req.body.username || !req.body.password) {
       return res.status(400).json({ message: "Username and password are required" });
     }
     
-    passport.authenticate("local", (err: Error | null, user: SelectUser | false, info: { message: string } | undefined) => {
+    // Authenticate using passport
+    passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
       if (err) {
         console.error("Authentication error:", err);
         return next(err);
       }
       
       if (!user) {
-        console.log("Login failed for username:", req.body.username);
-        return res.status(401).json({ message: "Invalid username or password" });
+        return res.status(401).json({ 
+          message: info?.message || "Invalid username or password" 
+        });
       }
       
-      // Trigger login and session creation
+      // Log user in
       req.login(user, (err) => {
         if (err) {
-          console.error("Login error:", err);
           return next(err);
         }
         
-        // Force session save
-        if (req.session) {
-          req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 7; // 7 days
+        // Explicitly save session with regenerated ID
+        req.session.regenerate((err) => {
+          if (err) {
+            return next(err);
+          }
+          
+          // Save session again with the user
           req.session.save((err) => {
             if (err) {
-              console.error("Session save error:", err);
               return next(err);
             }
             
-            // Log the successful authentication
-            console.log("User authenticated:", user.id, "Session ID:", req.sessionID);
+            console.log("Login successful - User ID:", user.id, "Session ID:", req.sessionID);
             
-            // Give the client access to key user information (without sensitive data like password)
-            const safeUser = { ...user, password: undefined };
-            return res.status(200).json(safeUser);
+            // Return user without password
+            const { password, ...userWithoutPassword } = user;
+            res.status(200).json(userWithoutPassword);
           });
-        } else {
-          // This shouldn't happen, but just in case
-          console.error("Session object not available after login");
-          return res.status(500).json({ message: "Authentication error" });
-        }
+        });
       });
     })(req, res, next);
   });
 
-  app.post("/api/logout", (req, res, next) => {
-    const sessionId = req.sessionID;
+  /**
+   * User logout endpoint
+   */
+  app.post("/api/logout", (req: Request, res: Response, next: NextFunction) => {
+    if (!req.isAuthenticated()) {
+      return res.status(200).json({ message: "Already logged out" });
+    }
     
-    // First logout (removes req.user and clears the session)
+    const sessionId = req.sessionID;
+    const userId = req.user?.id;
+    
+    // Log out user (removes req.user)
     req.logout((err) => {
       if (err) return next(err);
       
-      // Then destroy the session completely
+      // Destroy session
       req.session.destroy((err) => {
         if (err) {
           console.error("Error destroying session:", err);
           return next(err);
         }
         
-        console.log("User logged out. Session destroyed:", sessionId);
+        console.log(`Logout successful - User ID: ${userId}, Session destroyed: ${sessionId}`);
         
-        // Clear the session cookie
-        res.clearCookie('campaign-session');
-        res.sendStatus(200);
+        // Clear cookie
+        res.clearCookie('campaign_session');
+        res.status(200).json({ message: "Logged out successfully" });
       });
     });
   });
 
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) {
+  /**
+   * Get current user endpoint
+   */
+  app.get("/api/user", (req: Request, res: Response) => {
+    // Not authenticated
+    if (!req.isAuthenticated() || !req.user) {
       console.log("User not authenticated. Session ID:", req.sessionID);
-      return res.sendStatus(401);
+      return res.status(401).json({ 
+        authenticated: false,
+        message: "Not authenticated" 
+      });
     }
-    console.log("User authenticated. User ID:", req.user?.id, "Session ID:", req.sessionID);
-    res.json(req.user);
+    
+    // Authenticated - return user without password
+    console.log("User authenticated. User ID:", req.user.id, "Session ID:", req.sessionID);
+    const { password, ...userWithoutPassword } = req.user;
+    res.status(200).json({
+      authenticated: true,
+      user: userWithoutPassword
+    });
   });
 }
