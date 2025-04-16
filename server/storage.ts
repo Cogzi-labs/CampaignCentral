@@ -677,13 +677,19 @@ export class MemStorage implements IStorage {
   async createCampaign(insertCampaign: InsertCampaign): Promise<Campaign> {
     const id = this.campaignCurrentId++;
     const createdAt = new Date();
+    
+    // Create the campaign object with explicit properties to avoid type issues
     const campaign: Campaign = { 
-      ...insertCampaign, 
       id,
-      status: "draft", 
-      createdAt,
-      contactLabel: insertCampaign.contactLabel || null
+      name: insertCampaign.name,
+      template: insertCampaign.template,
+      contactLabel: insertCampaign.contactLabel || null,
+      status: "draft",
+      scheduledFor: insertCampaign.scheduledFor || null,
+      accountId: insertCampaign.accountId,
+      createdAt
     };
+    
     this.campaigns.set(id, campaign);
     return campaign;
   }
@@ -692,7 +698,15 @@ export class MemStorage implements IStorage {
     const campaign = this.campaigns.get(id);
     if (!campaign) return undefined;
     
-    const updatedCampaign = { ...campaign, ...updateData };
+    // Create a proper updated campaign with explicit handling of scheduledFor
+    const updatedCampaign: Campaign = { 
+      ...campaign,
+      name: updateData.name ?? campaign.name,
+      template: updateData.template ?? campaign.template,
+      contactLabel: updateData.contactLabel !== undefined ? updateData.contactLabel || null : campaign.contactLabel,
+      scheduledFor: updateData.scheduledFor !== undefined ? updateData.scheduledFor || null : campaign.scheduledFor
+    };
+    
     this.campaigns.set(id, updatedCampaign);
     return updatedCampaign;
   }

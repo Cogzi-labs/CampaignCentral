@@ -507,6 +507,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error fetching analytics", error: (error as Error).message });
     }
   });
+  
+  // Update campaign metrics
+  app.post("/api/analytics/update-metrics", checkAuth, async (req, res) => {
+    try {
+      const user = req.user!;
+      const { campaignId, metrics } = req.body;
+      
+      if (!campaignId || !metrics) {
+        return res.status(400).json({ 
+          message: "Campaign ID and metrics are required" 
+        });
+      }
+      
+      // Check if campaign exists and belongs to the user's account
+      const campaign = await storage.getCampaignById(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+      
+      if (campaign.accountId !== user.accountId) {
+        return res.status(403).json({ message: "Unauthorized access to this campaign" });
+      }
+      
+      // Update analytics with provided metrics
+      const analyticsData = {
+        campaignId,
+        accountId: user.accountId,
+        ...metrics
+      };
+      
+      const updatedAnalytics = await storage.createOrUpdateAnalytics(analyticsData);
+      res.json(updatedAnalytics);
+    } catch (error) {
+      res.status(500).json({ message: "Error updating metrics", error: (error as Error).message });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
