@@ -752,7 +752,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Hash password with scrypt and salt
   async function hashPassword(password: string) {
-    const salt = crypto.randomBytes(16).toString("hex");
+    const salt = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString("hex");
     const buf = (await scryptAsync(password, salt, 64)) as Buffer;
     return `${buf.toString("hex")}.${salt}`;
   }
