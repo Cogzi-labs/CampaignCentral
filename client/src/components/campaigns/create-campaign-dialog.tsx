@@ -10,6 +10,7 @@ import { campaignValidationSchema } from "@shared/schema";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
