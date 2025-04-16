@@ -77,6 +77,8 @@ export const analytics = pgTable("analytics", {
   delivered: integer("delivered").default(0).notNull(),
   read: integer("read").default(0).notNull(),
   optout: integer("optout").default(0).notNull(),
+  hold: integer("hold").default(0).notNull(),
+  failed: integer("failed").default(0).notNull(),
   accountId: integer("account_id").notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -87,6 +89,8 @@ export const insertAnalyticsSchema = createInsertSchema(analytics).pick({
   delivered: true,
   read: true,
   optout: true,
+  hold: true,
+  failed: true,
   accountId: true,
 });
 

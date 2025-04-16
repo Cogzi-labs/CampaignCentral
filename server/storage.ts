@@ -361,6 +361,8 @@ export class DatabaseStorage implements IStorage {
       delivered: 0,
       read: 0,
       optout: 0,
+      hold: 0,
+      failed: 0,
       accountId: result[0].accountId
     });
     
@@ -402,7 +404,9 @@ export class DatabaseStorage implements IStorage {
           sent: insertAnalytics.sent ?? existing[0].sent,
           delivered: insertAnalytics.delivered ?? existing[0].delivered,
           read: insertAnalytics.read ?? existing[0].read,
-          optout: insertAnalytics.optout ?? existing[0].optout
+          optout: insertAnalytics.optout ?? existing[0].optout,
+          hold: insertAnalytics.hold ?? existing[0].hold,
+          failed: insertAnalytics.failed ?? existing[0].failed
         })
         .where(eq(analytics.id, existing[0].id))
         .returning();
@@ -418,7 +422,9 @@ export class DatabaseStorage implements IStorage {
         sent: insertAnalytics.sent || 0,
         delivered: insertAnalytics.delivered || 0,
         read: insertAnalytics.read || 0,
-        optout: insertAnalytics.optout || 0
+        optout: insertAnalytics.optout || 0,
+        hold: insertAnalytics.hold || 0,
+        failed: insertAnalytics.failed || 0
       })
       .returning();
     return result[0];
@@ -729,6 +735,8 @@ export class MemStorage implements IStorage {
       delivered: 0,
       read: 0,
       optout: 0,
+      hold: 0,
+      failed: 0,
       accountId: campaign.accountId
     });
     
@@ -762,7 +770,9 @@ export class MemStorage implements IStorage {
         sent: insertAnalytics.sent ?? existing.sent,
         delivered: insertAnalytics.delivered ?? existing.delivered,
         read: insertAnalytics.read ?? existing.read,
-        optout: insertAnalytics.optout ?? existing.optout
+        optout: insertAnalytics.optout ?? existing.optout,
+        hold: insertAnalytics.hold ?? existing.hold,
+        failed: insertAnalytics.failed ?? existing.failed
       };
       this.analyticsData.set(existing.id, updated);
       return updated;
@@ -778,7 +788,9 @@ export class MemStorage implements IStorage {
       sent: insertAnalytics.sent || 0,
       delivered: insertAnalytics.delivered || 0,
       read: insertAnalytics.read || 0,
-      optout: insertAnalytics.optout || 0
+      optout: insertAnalytics.optout || 0,
+      hold: insertAnalytics.hold || 0,
+      failed: insertAnalytics.failed || 0
     };
     this.analyticsData.set(id, analytics);
     return analytics;
