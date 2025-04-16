@@ -56,6 +56,7 @@ export const campaigns = pgTable("campaigns", {
   template: text("template").notNull(),
   contactLabel: text("contact_label"),
   status: text("status").default("draft").notNull(),
+  scheduledFor: timestamp("scheduled_for"),
   accountId: integer("account_id").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -64,6 +65,7 @@ export const insertCampaignSchema = createInsertSchema(campaigns).pick({
   name: true,
   template: true,
   contactLabel: true,
+  scheduledFor: true,
   accountId: true,
 });
 
@@ -134,4 +136,5 @@ export const campaignValidationSchema = z.object({
   name: z.string().min(3, { message: "Campaign name must be at least 3 characters" }),
   template: z.string().min(1, { message: "You must select a template" }),
   contactLabel: z.string().optional(),
+  scheduledFor: z.string().optional(),
 });
