@@ -1,4 +1,10 @@
-import { users, type User, type InsertUser, contacts, type Contact, type InsertContact, campaigns, type Campaign, type InsertCampaign, analytics, type Analytics, type InsertAnalytics } from "@shared/schema";
+import { 
+  users, type User, type InsertUser, 
+  contacts, type Contact, type InsertContact, 
+  campaigns, type Campaign, type InsertCampaign, 
+  analytics, type Analytics, type InsertAnalytics,
+  settings, type Settings, type InsertSettings
+} from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPgSimple from "connect-pg-simple";
@@ -46,6 +52,10 @@ export interface IStorage {
   // Analytics methods
   getAnalytics(accountId: number, campaignId?: number): Promise<Analytics[]>;
   createOrUpdateAnalytics(analytics: InsertAnalytics): Promise<Analytics>;
+  
+  // Settings methods
+  getSettings(accountId: number): Promise<Settings | undefined>;
+  updateSettings(accountId: number, settings: Partial<InsertSettings>): Promise<Settings>;
 }
 
 // Filter types
@@ -413,6 +423,45 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return result[0];
   }
+  
+  // SETTINGS METHODS
+  async getSettings(accountId: number): Promise<Settings | undefined> {
+    const result = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.accountId, accountId));
+    
+    return result.length > 0 ? result[0] : undefined;
+  }
+  
+  async updateSettings(accountId: number, settingsData: Partial<InsertSettings>): Promise<Settings> {
+    // Check if settings already exist for this account
+    const existing = await this.getSettings(accountId);
+    
+    if (existing) {
+      // Update existing settings
+      const result = await db
+        .update(settings)
+        .set({ 
+          ...settingsData,
+          updatedAt: new Date()
+        })
+        .where(eq(settings.id, existing.id))
+        .returning();
+      return result[0];
+    }
+    
+    // Create new settings
+    const result = await db
+      .insert(settings)
+      .values({ 
+        ...settingsData,
+        accountId,
+        updatedAt: new Date()
+      })
+      .returning();
+    return result[0];
+  }
 }
 
 // In-memory storage implementation for local development
@@ -421,23 +470,27 @@ export class MemStorage implements IStorage {
   private contacts: Map<number, Contact>;
   private campaigns: Map<number, Campaign>;
   private analyticsData: Map<number, Analytics>;
+  private settingsData: Map<number, Settings>;
   sessionStore: session.Store;
   
   private userCurrentId: number;
   private contactCurrentId: number;
   private campaignCurrentId: number;
   private analyticsCurrentId: number;
+  private settingsCurrentId: number;
 
   constructor() {
     this.users = new Map();
     this.contacts = new Map();
     this.campaigns = new Map();
     this.analyticsData = new Map();
+    this.settingsData = new Map();
     
     this.userCurrentId = 1;
     this.contactCurrentId = 1;
     this.campaignCurrentId = 1;
     this.analyticsCurrentId = 1;
+    this.settingsCurrentId = 1;
     
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // 24h

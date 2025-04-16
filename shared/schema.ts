@@ -104,6 +104,24 @@ export type Campaign = typeof campaigns.$inferSelect;
 export type InsertAnalytics = z.infer<typeof insertAnalyticsSchema>;
 export type Analytics = typeof analytics.$inferSelect;
 
+// Settings schema
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+  accountId: integer("account_id").notNull().references(() => accounts.id),
+  wabaid: text("wabaid"),
+  facebookAccessToken: text("facebook_access_token"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSettingsSchema = createInsertSchema(settings).pick({
+  accountId: true,
+  wabaid: true,
+  facebookAccessToken: true,
+});
+
+export type InsertSettings = z.infer<typeof insertSettingsSchema>;
+export type Settings = typeof settings.$inferSelect;
+
 // Zod schemas for validation
 export const contactValidationSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
