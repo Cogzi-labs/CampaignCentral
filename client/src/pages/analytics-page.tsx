@@ -189,9 +189,27 @@ export default function AnalyticsPage() {
 
   return (
     <DashboardLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-800">Analytics</h1>
-        <p className="text-gray-600">Track the performance of your campaigns</p>
+      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">Analytics</h1>
+          <p className="text-gray-600">Track the performance of your campaigns</p>
+        </div>
+        <div className="flex space-x-2 mt-4 md:mt-0">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => window.open('/api/analytics/export/csv', '_blank')}
+          >
+            Export CSV
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => window.open('/api/analytics/export/pdf', '_blank')}
+          >
+            Export PDF
+          </Button>
+        </div>
       </div>
       
       {/* Date Range Selector */}
