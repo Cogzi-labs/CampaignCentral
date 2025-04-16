@@ -24,13 +24,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Loader2 } from "lucide-react";
 
 const formSchema = contactValidationSchema.extend({
@@ -147,22 +141,22 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Label</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a label" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem key="customer" value="Customer">Customer</SelectItem>
-                        <SelectItem key="lead" value="Lead">Lead</SelectItem>
-                        <SelectItem key="subscriber" value="Subscriber">Subscriber</SelectItem>
-                        <SelectItem key="vip" value="VIP">VIP</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Combobox
+                        options={[
+                          { label: "Customer", value: "Customer" },
+                          { label: "Lead", value: "Lead" },
+                          { label: "Subscriber", value: "Subscriber" },
+                          { label: "VIP", value: "VIP" },
+                          { label: "Prospect", value: "Prospect" }
+                        ]}
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select or add a label"
+                        emptyText="No labels found. Type to create a new one."
+                        allowCustomValue={true}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
