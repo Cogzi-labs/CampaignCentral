@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, Download } from "lucide-react";
 
 interface ImportContactsDialogProps {
   open: boolean;
@@ -130,6 +130,15 @@ export function ImportContactsDialog({ open, onOpenChange }: ImportContactsDialo
           <DialogTitle>Import Contacts</DialogTitle>
           <DialogDescription>
             Upload a CSV file with contact information. The file should have headers for name, mobile, location, and label.
+            <a 
+              href="/api/templates/contact-csv" 
+              className="inline-flex items-center mt-2 text-primary hover:text-blue-700 font-medium"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Download className="h-4 w-4 mr-1" />
+              Download sample template
+            </a>
           </DialogDescription>
         </DialogHeader>
         

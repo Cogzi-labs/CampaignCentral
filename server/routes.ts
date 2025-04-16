@@ -362,6 +362,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error fetching templates", error: (error as Error).message });
     }
   });
+  
+  // Sample CSV Template for Contacts Import
+  app.get("/api/templates/contact-csv", (req, res) => {
+    try {
+      const filePath = path.join(process.cwd(), 'uploads', 'sample_contacts_template.csv');
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=sample_contacts_template.csv');
+      res.sendFile(filePath);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching CSV template", error: (error as Error).message });
+    }
+  });
 
   // ANALYTICS API
   app.get("/api/analytics", checkAuth, async (req, res) => {
