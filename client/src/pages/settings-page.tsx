@@ -29,7 +29,7 @@ import {
 export default function SettingsPage() {
   // State for WhatsApp Business API settings
   const [whatsappSettings, setWhatsappSettings] = useState({
-    wabaid: '',
+    wabaApiUrl: '',
     facebookAccessToken: ''
   });
   
@@ -37,7 +37,7 @@ export default function SettingsPage() {
   interface SettingsData {
     id: number;
     accountId: number;
-    wabaid: string | null;
+    wabaApiUrl: string | null;
     facebookAccessToken: string | null;
     updatedAt: string;
   }
@@ -55,7 +55,7 @@ export default function SettingsPage() {
   React.useEffect(() => {
     if (settings) {
       setWhatsappSettings({
-        wabaid: settings.wabaid ? settings.wabaid : '',
+        wabaApiUrl: settings.wabaApiUrl ? settings.wabaApiUrl : '',
         facebookAccessToken: settings.facebookAccessToken ? settings.facebookAccessToken : ''
       });
     }
@@ -464,18 +464,18 @@ export default function SettingsPage() {
                   <form onSubmit={handleSaveWhatsAppSettings}>
                     <div className="space-y-4 mb-4">
                       <div className="space-y-2">
-                        <Label htmlFor="wabaid">WhatsApp Business Account ID (WABAID)</Label>
+                        <Label htmlFor="wabaApiUrl">WhatsApp Business API URL</Label>
                         <Input 
-                          id="wabaid"
-                          placeholder="Enter your WhatsApp Business Account ID"
-                          value={whatsappSettings.wabaid}
+                          id="wabaApiUrl"
+                          placeholder="Enter your WhatsApp Business API URL"
+                          value={whatsappSettings.wabaApiUrl}
                           onChange={(e) => setWhatsappSettings({
                             ...whatsappSettings,
-                            wabaid: e.target.value
+                            wabaApiUrl: e.target.value
                           })}
                         />
                         <p className="text-xs text-gray-500">
-                          This ID is used to fetch message templates from Facebook Graph API
+                          Full Graph API URL for fetching message templates (e.g., https://graph.facebook.com/v22.0/YOUR_WABA_ID/message_templates)
                         </p>
                       </div>
                       
