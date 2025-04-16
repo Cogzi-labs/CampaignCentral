@@ -6,6 +6,14 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { campaignValidationSchema } from "@shared/schema";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 import {
   Dialog,
@@ -34,12 +42,14 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Loader2, CalendarIcon, Clock } from "lucide-react";
 
 const formSchema = campaignValidationSchema.extend({
   template: z.string().min(1, "Please select a template"),
   contactLabel: z.string().optional(),
   scheduleForLater: z.boolean().default(false),
+  scheduledDate: z.date().optional(),
+  scheduledTime: z.string().optional(),
 });
 
 interface CreateCampaignDialogProps {
@@ -85,13 +95,26 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
       template: "",
       contactLabel: "",
       scheduleForLater: false,
+      scheduledDate: undefined,
+      scheduledTime: "",
     },
   });
 
   const campaignMutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      // Remove scheduleForLater as it's not part of the campaign schema
-      const { scheduleForLater, ...campaignData } = values;
+      // Handle scheduled date and time
+      const { scheduleForLater, scheduledDate, scheduledTime, ...campaignData } = values;
+      
+      // If scheduling for later and both date and time are provided, add them to the campaignData
+      if (scheduleForLater && scheduledDate && scheduledTime) {
+        campaignData.scheduledFor = new Date(
+          scheduledDate.getFullYear(),
+          scheduledDate.getMonth(),
+          scheduledDate.getDate(),
+          parseInt(scheduledTime.split(':')[0]),
+          parseInt(scheduledTime.split(':')[1])
+        ).toISOString();
+      }
       
       const res = await apiRequest("POST", "/api/campaigns", campaignData);
       return await res.json();
