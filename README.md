@@ -83,18 +83,20 @@ npm run build
 
 #### 7. Start the server
 ```bash
-# Method 1: Using npm start (might cause issues in some environments)
+# RECOMMENDED: Use our custom production runner (avoids all Vite config issues)
+./run-prod.sh
+
+# Alternative methods:
+# Using npm start (may have issues with Vite config)
 npm start
 
-# Method 2: Using the simple production shell script (RECOMMENDED)
-./start-prod.sh
+# Using the standalone build script (if you want to build without starting)
+./build.sh
 
-# Alternative options:
-# For Linux/macOS with more detailed logging:
-./start.sh
-
-# For Windows or Node-based environments:
-node start.js
+# Other options available (see Troubleshooting section):
+# ./start-prod.sh
+# ./start.sh
+# node start.js
 ```
 
 #### 8. Access the application
@@ -122,13 +124,25 @@ npm run dev
 - Check that the required ports (default: 5432 for PostgreSQL) are not being used by other applications
 
 ### Production Deployment Issues
-- If you encounter the error `Cannot find package 'vite' imported from vite.config.ts`:
-  - Use the simplified start script: `./start-prod.sh` (most reliable option)
-  - This script specifically fixes the Vite dependency issue
+- If you encounter errors loading Vite configuration like:
+  - `Cannot find package 'vite' imported from vite.config.ts` 
+  - `failed to load config from vite.config.ts`
+  
+  Use our new build + run solution:
+  ```bash
+  # Build only
+  ./build.sh
+  
+  # Build and run in one step
+  ./run-prod.sh
+  ```
+  
+  These scripts bypass Vite config loading issues by using a temporary JS configuration.
   
 - For other deployment issues, we provide alternative scripts:
-  - For Linux/macOS: `./start.sh` 
-  - For Windows or Node-based environments: `node start.js`
+  - Simple start script: `./start-prod.sh`
+  - Detailed logging: `./start.sh` 
+  - Windows environments: `node start.js`
   
 - All our start scripts will:
   - Automatically handle both production and development environments
