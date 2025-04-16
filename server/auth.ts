@@ -31,16 +31,19 @@ async function comparePasswords(supplied: string, stored: string) {
 export function setupAuth(app: Express) {
   const sessionSecret = process.env.SESSION_SECRET || 'campaign-manager-secret-key';
   
+  // Configure session to be stored properly
   const sessionSettings: session.SessionOptions = {
+    name: 'campaign-session',
     secret: sessionSecret,
     resave: true,
     saveUninitialized: true,
     store: storage.sessionStore,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // 1 day
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Set to true only in production with HTTPS
       httpOnly: true,
-      sameSite: 'lax'
+      sameSite: 'lax',
+      path: '/'
     }
   };
 

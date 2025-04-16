@@ -17,8 +17,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to check authentication for API routes
   const checkAuth = (req: Request, res: Response, next: Function) => {
     if (!req.isAuthenticated()) {
+      console.log("Unauthorized access attempt to", req.path, "Session ID:", req.sessionID);
       return res.status(401).json({ message: "Unauthorized" });
     }
+    
+    // User is authenticated, proceed
+    console.log("Authorized access to", req.path, "User ID:", req.user?.id, "Session ID:", req.sessionID);
     next();
   };
 
