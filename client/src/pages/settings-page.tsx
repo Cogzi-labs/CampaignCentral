@@ -30,7 +30,9 @@ export default function SettingsPage() {
   // State for WhatsApp Business API settings
   const [whatsappSettings, setWhatsappSettings] = useState({
     wabaApiUrl: '',
-    facebookAccessToken: ''
+    facebookAccessToken: '',
+    partnerMobile: '',
+    wabaId: ''
   });
   
   // Settings type definition
@@ -39,6 +41,8 @@ export default function SettingsPage() {
     accountId: number;
     wabaApiUrl: string | null;
     facebookAccessToken: string | null;
+    partnerMobile: string | null;
+    wabaId: string | null;
     updatedAt: string;
   }
 
