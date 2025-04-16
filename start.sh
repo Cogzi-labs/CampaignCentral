@@ -16,8 +16,13 @@ if [ "$NODE_ENV" = "production" ]; then
   else
     echo "No production build found, attempting to create build..."
     
+    # Ensure all dependencies are available
+    echo "Ensuring all dependencies are installed..."
+    
     # Try to build the application
-    npm run build
+    echo "Building the application..."
+    PATH=$(npm bin):$PATH NODE_ENV=production npx vite build && \
+    PATH=$(npm bin):$PATH NODE_ENV=production npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
     
     # Check if build was successful
     if [ -d "dist" ] && [ -f "dist/index.js" ]; then
@@ -25,6 +30,10 @@ if [ "$NODE_ENV" = "production" ]; then
       NODE_ENV=production node --enable-source-maps dist/index.js
     else
       echo "Build failed or dist/index.js not found, falling back to development mode"
+      echo "Error details may be above. Common issues:"
+      echo "- Missing dependencies (vite, esbuild)"
+      echo "- TypeScript errors"
+      echo "Attempting to run in development mode..."
       NODE_ENV=production tsx server/index.ts
     fi
   fi

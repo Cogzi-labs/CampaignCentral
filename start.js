@@ -6,7 +6,8 @@
  * 
  * It will try to run the appropriate start command based on what's available:
  * 1. First try to use the built dist/index.js file (normal production)
- * 2. Fall back to development mode if dist/index.js doesn't exist
+ * 2. Try to build the application if dist/index.js doesn't exist
+ * 3. Fall back to development mode if build fails
  */
 
 import { existsSync } from 'fs';
@@ -28,26 +29,51 @@ console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 // Set NODE_ENV to production
 process.env.NODE_ENV = 'production';
 
-let startCommand;
-let startArgs;
-
-if (hasBuiltVersion) {
-  console.log('Using production build from dist/index.js');
-  startCommand = 'node';
-  startArgs = ['--enable-source-maps', distFilePath];
-} else {
-  console.log('No production build found, starting in development mode');
-  startCommand = 'tsx';
-  startArgs = ['server/index.ts'];
+// Function to run a command and return success status
+function runCommand(command, args, env = {}) {
+  console.log(`Running command: ${command} ${args.join(' ')}`);
+  const result = spawnSync(command, args, { 
+    stdio: 'inherit',
+    env: { ...process.env, ...env }
+  });
+  return result.status === 0;
 }
 
-console.log(`Running command: ${startCommand} ${startArgs.join(' ')}`);
-
-// Run the start command
-const result = spawnSync(startCommand, startArgs, { 
-  stdio: 'inherit',
-  env: { ...process.env }
-});
-
-// Handle the exit
-process.exit(result.status || 0);
+// Starting logic
+if (hasBuiltVersion) {
+  console.log('Using production build from dist/index.js');
+  runCommand('node', ['--enable-source-maps', distFilePath]);
+} else {
+  console.log('No production build found, attempting to create build...');
+  
+  // Use npx to ensure we have the right path to the binaries
+  console.log('Building client assets with Vite...');
+  const viteBuildSuccess = runCommand('npx', ['vite', 'build'], { NODE_ENV: 'production' });
+  
+  if (viteBuildSuccess) {
+    console.log('Building server with esbuild...');
+    const esbuildSuccess = runCommand('npx', [
+      'esbuild', 
+      'server/index.ts', 
+      '--platform=node', 
+      '--packages=external', 
+      '--bundle', 
+      '--format=esm', 
+      '--outdir=dist'
+    ], { NODE_ENV: 'production' });
+    
+    if (esbuildSuccess && existsSync(distFilePath)) {
+      console.log('Build successful, starting server');
+      runCommand('node', ['--enable-source-maps', distFilePath]);
+    } else {
+      console.log('Server build failed, falling back to development mode');
+      runCommand('npx', ['tsx', 'server/index.ts']);
+    }
+  } else {
+    console.log('Client build failed, falling back to development mode');
+    console.log('Common build failures:');
+    console.log('- Missing dependencies (vite, esbuild)');
+    console.log('- TypeScript errors in the codebase');
+    runCommand('npx', ['tsx', 'server/index.ts']);
+  }
+}

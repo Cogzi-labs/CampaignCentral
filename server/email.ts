@@ -11,24 +11,31 @@ const SES_PASSWORD = process.env.SES_PASSWORD || '';
 const SES_SENDER = process.env.SES_SENDER || 'balaji@ce.cogzi.io'; // Use environment or default
 const SES_REGION = process.env.SES_REGION || 'ap-south-1'; // Default to ap-south-1 if not provided
 
-// Initialize AWS SES service
-const sesConfig = {
+// Set the AWS SDK configuration globally to ensure consistent credentials
+AWS.config.update({
   accessKeyId: SES_USERNAME,
   secretAccessKey: SES_PASSWORD,
   region: SES_REGION,
-};
+});
 
 // Log loaded credentials (without sensitive information)
 log(`SES configuration loaded: username=${SES_USERNAME ? 'provided' : 'missing'}, password=${SES_PASSWORD ? 'provided' : 'missing'}, sender=${SES_SENDER}`, 'email');
 
-// Initialize the SES object
-const ses = new AWS.SES(sesConfig);
+// Initialize the SES object with explicit region to avoid any region mismatch issues
+const ses = new AWS.SES({
+  apiVersion: '2010-12-01', // Use a specific API version for better stability
+  region: SES_REGION,       // Explicitly set region again
+});
 
 // Check if SES credentials are configured
 if (SES_USERNAME && SES_PASSWORD) {
   log('AWS SES credentials configured', 'email');
   log(`Using SES username: ${SES_USERNAME}`, 'email');
   log(`Using SES region: ${SES_REGION}`, 'email');
+  log(`Using SES sender: ${SES_SENDER}`, 'email');
+  
+  // Debug information for region consistency
+  log(`AWS SDK region is set to: ${AWS.config.region}`, 'email');
 } else {
   log('AWS SES credentials not found. Email functionality is disabled.', 'email');
   log(`SES_USERNAME exists: ${!!SES_USERNAME}`, 'email');
