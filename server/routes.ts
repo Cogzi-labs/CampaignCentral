@@ -8,7 +8,6 @@ import { parse } from "csv-parse";
 import fs from "fs";
 import * as path from "path";
 import { sendPasswordResetEmail, sendEmail } from "./email";
-import { sendGridEmail, sendGridPasswordResetEmail } from "./sendgrid";
 import { scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 
@@ -868,7 +867,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error(`Failed to send password reset email to ${email}`);
         
         // Check if AWS SES credentials are configured
-        if (!process.env.SES_USERNAME || !process.env.SES_PASSWORD || !process.env.SES_SENDER) {
+        if (!process.env.SES_USERNAME || !process.env.SES_PASSWORD) {
           return res.status(500).json({ 
             message: "Email service not configured. Contact administrator.",
             code: "EMAIL_SERVICE_UNCONFIGURED"
@@ -946,61 +945,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("Starting email test...");
       
-      // Check if AWS SES credentials are configured
-      if (!process.env.SES_USERNAME || !process.env.SES_PASSWORD || !process.env.SES_SENDER) {
-        console.error("Missing AWS SES credentials:", {
-          username: !!process.env.SES_USERNAME,
-          password: !!process.env.SES_PASSWORD,
-          sender: !!process.env.SES_SENDER,
-          region: process.env.SES_REGION || "not set"
-        });
-        
-        return res.status(500).json({ 
-          message: "Email service not configured. AWS SES credentials are missing.",
-          missing: {
-            username: !process.env.SES_USERNAME,
-            password: !process.env.SES_PASSWORD,
-            sender: !process.env.SES_SENDER
-          }
-        });
-      }
-      
       const { email } = req.body;
       
       if (!email) {
         return res.status(400).json({ message: "Email address is required" });
       }
       
-      // Send test email
-      console.log(`Attempting to send test email to ${email} from ${process.env.SES_SENDER}`);
+      let success = false;
+      let provider = '';
       
-      try {
-        const emailResult = await sendEmail({
-          to: email,
-          subject: "CampaignHub Test Email",
-          text: "This is a test email from CampaignHub to verify email sending works correctly.",
-          html: "<h1>Test Email</h1><p>This is a test email from CampaignHub to verify email sending works correctly.</p>"
+      // Try AWS SES first if configured
+      if (process.env.SES_USERNAME && process.env.SES_PASSWORD) {
+        console.log(`Attempting to send test email to ${email} via AWS SES`);
+        
+        try {
+          const sesResult = await sendEmail({
+            to: email,
+            subject: "CampaignHub Test Email (AWS SES)",
+            text: "This is a test email from CampaignHub via AWS SES to verify email sending works correctly.",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #333; text-align: center;">Email Test Successful (AWS SES)</h2>
+                <p>This is a test email from your CampaignHub application.</p>
+                <p>If you can read this, email sending with AWS SES is working correctly!</p>
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;" />
+                <p style="color: #888; font-size: 12px; text-align: center;">CampaignHub - Marketing Campaign Management</p>
+              </div>
+            `
+          });
+          
+          success = sesResult;
+          provider = 'AWS SES';
+          console.log("AWS SES email test result:", success);
+        } catch (sesError) {
+          console.error("AWS SES error:", sesError);
+        }
+      } else {
+        console.log("AWS SES not configured, skipping");
+      }
+      
+      // Fallback to SendGrid if AWS SES fails or isn't configured
+      if (!success && process.env.SENDGRID_API_KEY) {
+        console.log(`Attempting to send test email to ${email} via SendGrid`);
+        
+        try {
+          const sendGridResult = await sendGridEmail({
+            to: email,
+            subject: "CampaignHub Test Email (SendGrid)",
+            text: "This is a test email from CampaignHub via SendGrid to verify email sending works correctly.",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #333; text-align: center;">Email Test Successful (SendGrid)</h2>
+                <p>This is a test email from your CampaignHub application.</p>
+                <p>If you can read this, email sending with SendGrid is working correctly!</p>
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;" />
+                <p style="color: #888; font-size: 12px; text-align: center;">CampaignHub - Marketing Campaign Management</p>
+              </div>
+            `
+          });
+          
+          success = sendGridResult;
+          provider = 'SendGrid';
+          console.log("SendGrid email test result:", success);
+        } catch (sgError) {
+          console.error("SendGrid error:", sgError);
+        }
+      } else if (!success) {
+        console.log("SendGrid not configured or AWS SES succeeded, skipping SendGrid");
+      }
+      
+      // Send response based on test results
+      if (success) {
+        res.status(200).json({ 
+          message: `Test email sent successfully using ${provider}`,
+          success: true,
+          provider
         });
+      } else {
+        // Check which email services are configured
+        const sesConfigured = !!(process.env.SES_USERNAME && process.env.SES_PASSWORD);
+        const sendGridConfigured = !!process.env.SENDGRID_API_KEY;
         
-        console.log("Email test result:", emailResult);
-        
-        if (emailResult) {
-          res.status(200).json({ 
-            message: "Test email sent successfully",
-            success: true
+        if (!sesConfigured && !sendGridConfigured) {
+          res.status(500).json({ 
+            message: "No email service is configured. Please set up AWS SES or SendGrid.",
+            success: false,
+            config: {
+              awsSesConfigured: sesConfigured,
+              sendGridConfigured: sendGridConfigured
+            }
           });
         } else {
           res.status(500).json({ 
-            message: "Failed to send test email. Check server logs for details.",
-            success: false
+            message: "Failed to send test email with all configured providers. Check server logs for details.",
+            success: false,
+            attemptedProviders: [
+              ...(sesConfigured ? ['AWS SES'] : []),
+              ...(sendGridConfigured ? ['SendGrid'] : [])
+            ]
           });
         }
-      } catch (emailError) {
-        console.error("Email sending error:", emailError);
-        res.status(500).json({ 
-          message: "Error sending test email",
-          error: (emailError as Error).message
-        });
       }
     } catch (error) {
       console.error("Test email endpoint error:", error);
