@@ -151,6 +151,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error deleting contact", error: (error as Error).message });
     }
   });
+  
+  app.post("/api/contacts/batch-delete", checkAuth, async (req, res) => {
+    try {
+      const { ids } = req.body;
+      const user = req.user!;
+      
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "No contact IDs provided for deletion" });
+      }
+      
+      const results = { 
+        success: 0, 
+        notFound: 0, 
+        unauthorized: 0, 
+        error: 0 
+      };
+      
+      // Process each contact
+      for (const id of ids) {
+        try {
+          const contactId = parseInt(id);
+          
+          // Check if contact exists and belongs to the user's account
+          const contact = await storage.getContactById(contactId);
+          if (!contact) {
+            results.notFound++;
+            continue;
+          }
+          
+          if (contact.accountId !== user.accountId) {
+            results.unauthorized++;
+            continue;
+          }
+          
+          // Delete contact
+          await storage.deleteContact(contactId);
+          results.success++;
+        } catch (err) {
+          results.error++;
+        }
+      }
+      
+      res.status(200).json({ 
+        message: "Batch delete operation completed", 
+        results 
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Error performing batch delete", error: (error as Error).message });
+    }
+  });
 
   // CSV Import
   app.post("/api/contacts/import", checkAuth, upload.single('file'), async (req, res) => {

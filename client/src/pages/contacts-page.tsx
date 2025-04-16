@@ -6,6 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { AddContactDialog } from "@/components/contacts/add-contact-dialog";
 import { ImportContactsDialog } from "@/components/contacts/import-contacts-dialog";
 import { DeleteContactDialog } from "@/components/contacts/delete-contact-dialog";
+import { BulkDeleteDialog } from "@/components/contacts/bulk-delete-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,8 @@ export default function ContactsPage() {
   const [showImportContacts, setShowImportContacts] = React.useState(false);
   const [selectedContact, setSelectedContact] = React.useState<any | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [selectedContacts, setSelectedContacts] = React.useState<any[]>([]);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = React.useState(false);
   
   // State for filters
   const [labelFilter, setLabelFilter] = React.useState("");
@@ -84,13 +87,13 @@ export default function ContactsPage() {
   // Extract unique locations from contacts for filter dropdown
   const uniqueLocations = React.useMemo(() => {
     const locations = contacts.map((contact: any) => contact.location).filter(Boolean);
-    return Array.from(new Set(locations));
+    return Array.from(new Set(locations)) as string[];
   }, [contacts]);
 
   // Extract unique labels from contacts for filter dropdown
   const uniqueLabels = React.useMemo(() => {
     const labels = contacts.map((contact: any) => contact.label).filter(Boolean);
-    return Array.from(new Set(labels));
+    return Array.from(new Set(labels)) as string[];
   }, [contacts]);
 
   // Handle delete contact
@@ -178,7 +181,7 @@ export default function ContactsPage() {
       label: "Filter by Label",
       options: [
         { value: "", label: "All Labels" },
-        ...uniqueLabels.map((label: string) => ({
+        ...uniqueLabels.map((label) => ({
           value: label,
           label,
         })),
@@ -190,7 +193,7 @@ export default function ContactsPage() {
       label: "Filter by Location",
       options: [
         { value: "", label: "All Locations" },
-        ...uniqueLocations.map((location: string) => ({
+        ...uniqueLocations.map((location) => ({
           value: location,
           label: location,
         })),
@@ -234,6 +237,24 @@ export default function ContactsPage() {
     </div>
   );
 
+  // Handle row selection
+  const handleRowSelect = (rows: any[]) => {
+    setSelectedContacts(rows);
+  };
+
+  // Action to delete multiple contacts
+  const handleBulkDelete = () => {
+    if (selectedContacts.length > 0) {
+      setShowBulkDeleteDialog(true);
+    } else {
+      toast({
+        title: "No contacts selected",
+        description: "Please select at least one contact to delete.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -241,6 +262,19 @@ export default function ContactsPage() {
           <h1 className="text-2xl font-semibold text-gray-800">Contacts</h1>
           <p className="text-gray-600">Manage and organize your contacts</p>
         </div>
+        {selectedContacts.length > 0 && (
+          <div className="mt-4 sm:mt-0">
+            <Button 
+              variant="destructive" 
+              size="sm"
+              onClick={handleBulkDelete}
+              className="whitespace-nowrap"
+            >
+              <TrashIcon className="h-4 w-4 mr-2" />
+              Delete Selected ({selectedContacts.length})
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow">
@@ -248,6 +282,7 @@ export default function ContactsPage() {
           data={contacts}
           columns={columns}
           showCheckbox={true}
+          onRowSelect={handleRowSelect}
           searchPlaceholder="Search contacts..."
           filters={filters}
           actions={actions}
@@ -271,6 +306,14 @@ export default function ContactsPage() {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         contact={selectedContact}
+      />
+
+      {/* Bulk Delete Contact Dialog */}
+      <BulkDeleteDialog
+        open={showBulkDeleteDialog}
+        onOpenChange={setShowBulkDeleteDialog}
+        contacts={selectedContacts}
+        onComplete={() => setSelectedContacts([])}
       />
     </DashboardLayout>
   );
