@@ -157,10 +157,10 @@ export function AddContactDialog({ open, onOpenChange }: AddContactDialogProps) 
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Customer">Customer</SelectItem>
-                        <SelectItem value="Lead">Lead</SelectItem>
-                        <SelectItem value="Subscriber">Subscriber</SelectItem>
-                        <SelectItem value="VIP">VIP</SelectItem>
+                        <SelectItem key="customer" value="Customer">Customer</SelectItem>
+                        <SelectItem key="lead" value="Lead">Lead</SelectItem>
+                        <SelectItem key="subscriber" value="Subscriber">Subscriber</SelectItem>
+                        <SelectItem key="vip" value="VIP">VIP</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

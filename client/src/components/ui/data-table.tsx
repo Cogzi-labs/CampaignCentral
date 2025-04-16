@@ -120,11 +120,14 @@ export function DataTable<T extends { id: number | string }>({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {filter.options.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
+                    {filter.options.map((option) => 
+                      // Make sure we never have empty string values in SelectItem
+                      (option.value !== undefined && (option.value !== "" || option.label === "All Labels" || option.label === "All Locations" || option.label === "All Statuses" || option.label === "All Time")) ? (
+                        <SelectItem key={option.value || `option-${option.label}`} value={option.value || `value-${option.label}`}>
+                          {option.label}
+                        </SelectItem>
+                      ) : null
+                    )}
                   </SelectGroup>
                 </SelectContent>
               </Select>

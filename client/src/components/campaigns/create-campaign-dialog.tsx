@@ -183,12 +183,15 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="all">All Contacts</SelectItem>
-                      {uniqueLabels.map((label: string) => (
-                        <SelectItem key={label} value={label}>
-                          {label}
-                        </SelectItem>
-                      ))}
+                      <SelectItem key="all" value="all">All Contacts</SelectItem>
+                      {uniqueLabels.map((label: string) => 
+                        // Make sure we never have an empty string value
+                        label && label.trim() !== "" ? (
+                          <SelectItem key={label} value={label}>
+                            {label}
+                          </SelectItem>
+                        ) : null
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
