@@ -11,6 +11,7 @@ import connectPgSimple from "connect-pg-simple";
 import { db } from "./db";
 import { eq, and, like, gte, or, desc } from "drizzle-orm";
 import { pool } from "./db";
+import crypto from 'crypto';
 
 // Define the SessionStore type to handle type errors
 declare module "express-session" {
@@ -30,7 +31,11 @@ export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  createResetToken(userId: number): Promise<string>;
+  verifyResetToken(token: string): Promise<User | undefined>;
+  updatePassword(userId: number, password: string): Promise<boolean>;
   
   // Contact methods
   getContacts(accountId: number, filters?: ContactFilters): Promise<Contact[]>;
@@ -94,12 +99,75 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0 ? result[0] : undefined;
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.email, email));
+    return result.length > 0 ? result[0] : undefined;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const result = await db
       .insert(users)
       .values({ ...insertUser, createdAt: new Date() })
       .returning();
     return result[0];
+  }
+  
+  async createResetToken(userId: number): Promise<string> {
+    const user = await this.getUser(userId);
+    if (!user) throw new Error('User not found');
+    
+    // Generate random token
+    const token = crypto.randomBytes(20).toString('hex');
+    
+    // Set token expiry to 1 hour from now
+    const expiry = new Date();
+    expiry.setHours(expiry.getHours() + 1);
+    
+    // Update user with new token
+    const result = await db
+      .update(users)
+      .set({ 
+        resetToken: token, 
+        resetTokenExpiry: expiry 
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (result.length === 0) throw new Error('Failed to create reset token');
+    
+    return token;
+  }
+  
+  async verifyResetToken(token: string): Promise<User | undefined> {
+    const result = await db
+      .select()
+      .from(users)
+      .where(eq(users.resetToken, token));
+    
+    if (result.length === 0) return undefined;
+    
+    const user = result[0];
+    
+    // Check if token is expired
+    if (!user.resetTokenExpiry || user.resetTokenExpiry < new Date()) {
+      return undefined;
+    }
+    
+    return user;
+  }
+  
+  async updatePassword(userId: number, password: string): Promise<boolean> {
+    const result = await db
+      .update(users)
+      .set({ 
+        password,
+        resetToken: null,
+        resetTokenExpiry: null
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return result.length > 0;
   }
 
   // CONTACT METHODS
@@ -513,6 +581,12 @@ export class MemStorage implements IStorage {
       (user) => user.username === username,
     );
   }
+  
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.email === email,
+    );
+  }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userCurrentId++;
@@ -527,6 +601,59 @@ export class MemStorage implements IStorage {
     };
     this.users.set(id, user);
     return user;
+  }
+  
+  async createResetToken(userId: number): Promise<string> {
+    const user = await this.getUser(userId);
+    if (!user) throw new Error('User not found');
+    
+    // Generate random token
+    const token = crypto.randomBytes(20).toString('hex');
+    
+    // Set token expiry to 1 hour from now
+    const expiry = new Date();
+    expiry.setHours(expiry.getHours() + 1);
+    
+    // Update user with new token
+    const updatedUser = { 
+      ...user, 
+      resetToken: token, 
+      resetTokenExpiry: expiry 
+    };
+    this.users.set(userId, updatedUser);
+    
+    return token;
+  }
+  
+  async verifyResetToken(token: string): Promise<User | undefined> {
+    const user = Array.from(this.users.values()).find(
+      (user) => user.resetToken === token
+    );
+    
+    if (!user) return undefined;
+    
+    // Check if token is expired
+    if (!user.resetTokenExpiry || user.resetTokenExpiry < new Date()) {
+      return undefined;
+    }
+    
+    return user;
+  }
+  
+  async updatePassword(userId: number, password: string): Promise<boolean> {
+    const user = await this.getUser(userId);
+    if (!user) return false;
+    
+    // Update user with new password and clear token
+    const updatedUser = { 
+      ...user, 
+      password,
+      resetToken: null,
+      resetTokenExpiry: null
+    };
+    this.users.set(userId, updatedUser);
+    
+    return true;
   }
 
   // CONTACT METHODS
