@@ -74,9 +74,9 @@ export const analytics = pgTable("analytics", {
   id: serial("id").primaryKey(),
   campaignId: integer("campaign_id").notNull(),
   sent: integer("sent").default(0).notNull(),
-  opened: integer("opened").default(0).notNull(),
-  clicked: integer("clicked").default(0).notNull(),
-  converted: integer("converted").default(0).notNull(),
+  delivered: integer("delivered").default(0).notNull(),
+  read: integer("read").default(0).notNull(),
+  optout: integer("optout").default(0).notNull(),
   accountId: integer("account_id").notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -84,9 +84,9 @@ export const analytics = pgTable("analytics", {
 export const insertAnalyticsSchema = createInsertSchema(analytics).pick({
   campaignId: true,
   sent: true,
-  opened: true,
-  clicked: true,
-  converted: true,
+  delivered: true,
+  read: true,
+  optout: true,
   accountId: true,
 });
 
