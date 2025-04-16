@@ -6,6 +6,13 @@ import { db } from "./db";
 import { eq, and, like, gte, or, desc } from "drizzle-orm";
 import { pool } from "./db";
 
+// Define the SessionStore type to handle type errors
+declare module "express-session" {
+  interface SessionData {
+    passport?: any;
+  }
+}
+
 const MemoryStore = createMemoryStore(session);
 const PostgresStore = connectPgSimple(session);
 
@@ -381,7 +388,11 @@ export class DatabaseStorage implements IStorage {
         .update(analytics)
         .set({ 
           ...insertAnalytics,
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          sent: insertAnalytics.sent ?? existing[0].sent,
+          opened: insertAnalytics.opened ?? existing[0].opened,
+          clicked: insertAnalytics.clicked ?? existing[0].clicked,
+          converted: insertAnalytics.converted ?? existing[0].converted
         })
         .where(eq(analytics.id, existing[0].id))
         .returning();
@@ -393,7 +404,11 @@ export class DatabaseStorage implements IStorage {
       .insert(analytics)
       .values({ 
         ...insertAnalytics, 
-        updatedAt: new Date() 
+        updatedAt: new Date(),
+        sent: insertAnalytics.sent || 0,
+        opened: insertAnalytics.opened || 0,
+        clicked: insertAnalytics.clicked || 0,
+        converted: insertAnalytics.converted || 0
       })
       .returning();
     return result[0];
@@ -676,7 +691,11 @@ export class MemStorage implements IStorage {
       const updated = { 
         ...existing, 
         ...insertAnalytics,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        sent: insertAnalytics.sent ?? existing.sent,
+        opened: insertAnalytics.opened ?? existing.opened,
+        clicked: insertAnalytics.clicked ?? existing.clicked,
+        converted: insertAnalytics.converted ?? existing.converted
       };
       this.analyticsData.set(existing.id, updated);
       return updated;
@@ -688,7 +707,11 @@ export class MemStorage implements IStorage {
     const analytics: Analytics = { 
       ...insertAnalytics, 
       id, 
-      updatedAt
+      updatedAt,
+      sent: insertAnalytics.sent || 0,
+      opened: insertAnalytics.opened || 0,
+      clicked: insertAnalytics.clicked || 0,
+      converted: insertAnalytics.converted || 0
     };
     this.analyticsData.set(id, analytics);
     return analytics;
