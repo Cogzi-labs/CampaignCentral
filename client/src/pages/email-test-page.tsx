@@ -118,7 +118,7 @@ export default function EmailTestPage() {
       <div className="mt-8 max-w-md mx-auto text-sm text-muted-foreground">
         <h3 className="font-medium mb-2">Common AWS SES Issues:</h3>
         <ul className="list-disc list-inside space-y-1">
-          <li>The sender email ({process.env.SES_SENDER || "Not configured"}) needs to be verified in AWS SES</li>
+          <li>The sender email (balaji@ce.cogzi.io) needs to be verified in AWS SES</li>
           <li>The recipient email needs to be verified if your account is in the SES sandbox</li>
           <li>The AWS credentials need proper SES permissions</li>
           <li>There might be SES sending quotas or throttling</li>

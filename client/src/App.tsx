@@ -23,6 +23,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/forgot-password" component={ForgotPasswordPage} />
       <Route path="/reset-password" component={ResetPasswordPage} />
+      <Route path="/email-test" component={EmailTestPage} />
       <ProtectedRoute path="/" component={DashboardPage} />
       <ProtectedRoute path="/contacts" component={ContactsPage} />
       <ProtectedRoute path="/campaigns" component={CampaignsPage} />
