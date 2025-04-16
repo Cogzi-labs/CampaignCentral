@@ -7,6 +7,9 @@ import multer from "multer";
 import { parse } from "csv-parse";
 import fs from "fs";
 import * as path from "path";
+import { sendPasswordResetEmail } from "./email";
+import { scrypt, timingSafeEqual } from "crypto";
+import { promisify } from "util";
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(process.cwd(), 'uploads');
@@ -741,6 +744,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error exporting PDF:", error);
       res.status(500).json({ message: "Error exporting analytics as PDF", error: (error as Error).message });
+    }
+  });
+
+  // PASSWORD RESET API
+  const scryptAsync = promisify(scrypt);
+  
+  // Hash password with scrypt and salt
+  async function hashPassword(password: string) {
+    const salt = crypto.randomBytes(16).toString("hex");
+    const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+    return `${buf.toString("hex")}.${salt}`;
+  }
+  
+  // Request a password reset link
+  app.post("/api/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // For security reasons, don't reveal whether the email exists
+        return res.status(200).json({ message: "If your email is registered, you will receive a password reset link" });
+      }
+      
+      // Create a reset token
+      const token = await storage.createResetToken(user.id);
+      
+      // Send reset email
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const emailSent = await sendPasswordResetEmail(
+        email,
+        user.username,
+        token,
+        baseUrl
+      );
+      
+      if (!emailSent) {
+        console.error(`Failed to send password reset email to ${email}`);
+        
+        // Check if SendGrid API key is configured
+        if (!process.env.SENDGRID_API_KEY) {
+          return res.status(500).json({ 
+            message: "Email service not configured. Contact administrator.",
+            code: "EMAIL_SERVICE_UNCONFIGURED"
+          });
+        }
+        
+        return res.status(500).json({ 
+          message: "Failed to send password reset email. Please try again later.",
+          code: "EMAIL_SEND_FAILED"
+        });
+      }
+      
+      res.status(200).json({ 
+        message: "Password reset link sent to your email",
+        success: true
+      });
+    } catch (error) {
+      console.error("Password reset request error:", error);
+      res.status(500).json({ 
+        message: "Error processing password reset request", 
+        error: (error as Error).message 
+      });
+    }
+  });
+  
+  // Verify reset token and set new password
+  app.post("/api/reset-password", async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      
+      if (!token || !password) {
+        return res.status(400).json({ 
+          message: "Token and password are required",
+          code: "MISSING_FIELDS" 
+        });
+      }
+      
+      // Verify token
+      const user = await storage.verifyResetToken(token);
+      if (!user) {
+        return res.status(400).json({ 
+          message: "Invalid or expired token", 
+          code: "INVALID_TOKEN"
+        });
+      }
+      
+      // Hash the new password
+      const hashedPassword = await hashPassword(password);
+      
+      // Update user password and clear reset token
+      const success = await storage.updatePassword(user.id, hashedPassword);
+      
+      if (!success) {
+        return res.status(500).json({ 
+          message: "Failed to update password", 
+          code: "UPDATE_FAILED"
+        });
+      }
+      
+      res.status(200).json({ 
+        message: "Password successfully reset. You can now log in with your new password.",
+        success: true
+      });
+    } catch (error) {
+      console.error("Password reset error:", error);
+      res.status(500).json({ 
+        message: "Error processing password reset", 
+        error: (error as Error).message 
+      });
     }
   });
 
