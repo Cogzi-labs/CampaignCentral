@@ -396,16 +396,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (campaign.status === "active") {
         return res.status(400).json({ message: "Campaign is already active" });
       }
-      
-      // Launch campaign
-      const success = await storage.launchCampaign(campaignId);
-      
-      if (success) {
-        res.status(200).json({ message: "Campaign launched successfully" });
+
+      // Get campaign settings
+      const settings = await storage.getSettings(user.accountId);
+      if (!settings || !settings.partnerMobile || !settings.wabaId) {
+        return res.status(400).json({ 
+          message: "Campaign settings are incomplete. Please configure Partner Mobile and WABA ID in settings.",
+          code: "SETTINGS_MISSING" 
+        });
+      }
+
+      // Get contacts for this campaign's label
+      let contacts;
+      if (campaign.contactLabel) {
+        contacts = await storage.getContacts(user.accountId, { label: campaign.contactLabel });
       } else {
-        res.status(500).json({ message: "Failed to launch campaign" });
+        contacts = await storage.getContacts(user.accountId);
+      }
+
+      if (contacts.length === 0) {
+        return res.status(400).json({ message: "No contacts found for this campaign" });
+      }
+
+      // Format contacts data for the API
+      const contactsData = contacts.map(contact => [contact.mobile, contact.name]);
+
+      // Call the campaign API
+      const apiKey = process.env.CAMPAIGN_API_KEY;
+      if (!apiKey) {
+        console.error("Campaign API key not found in environment variables");
+        return res.status(500).json({ message: "Campaign API key not configured" });
+      }
+
+      // Prepare request to campaign API
+      const apiUrl = "https://8x83b7rn4f.execute-api.ap-south-1.amazonaws.com/qa/campaign";
+      const requestData = {
+        campaignName: campaign.name,
+        campaignId: campaign.id.toString(),
+        templateName: campaign.template,
+        partnerMobile: settings.partnerMobile,
+        data: contactsData,
+        WABAID: settings.wabaId
+      };
+
+      console.log("Sending campaign to API:", JSON.stringify(requestData, null, 2));
+
+      try {
+        const apiResponse = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey
+          },
+          body: JSON.stringify(requestData)
+        });
+
+        const apiResult = await apiResponse.json();
+        
+        if (!apiResponse.ok) {
+          console.error("Campaign API error:", apiResult);
+          return res.status(apiResponse.status).json({ 
+            message: "Campaign API error", 
+            apiError: apiResult 
+          });
+        }
+
+        // Update campaign status in database
+        const success = await storage.launchCampaign(campaignId);
+        
+        if (success) {
+          res.status(200).json({ 
+            message: "Campaign launched successfully",
+            apiResponse: apiResult
+          });
+        } else {
+          res.status(500).json({ 
+            message: "Campaign API call succeeded but failed to update local database",
+            apiResponse: apiResult
+          });
+        }
+      } catch (apiError) {
+        console.error("Campaign API call failed:", apiError);
+        return res.status(500).json({ 
+          message: "Failed to connect to campaign API", 
+          error: (apiError as Error).message 
+        });
       }
     } catch (error) {
+      console.error("Error launching campaign:", error);
       res.status(500).json({ message: "Error launching campaign", error: (error as Error).message });
     }
   });
