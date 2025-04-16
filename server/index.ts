@@ -7,6 +7,18 @@ import dotenv from "dotenv";
 // Load environment variables from .env file
 dotenv.config();
 
+// Export environment variables to be used in other modules
+export const sesCredentials = {
+  username: process.env.SES_USERNAME || '',
+  password: process.env.SES_PASSWORD || '',
+  sender: process.env.SES_SENDER || ''
+};
+
+// Debug environment variables
+console.log("ENV DEBUG: SES_USERNAME =", sesCredentials.username);
+console.log("ENV DEBUG: SES_PASSWORD exists =", !!sesCredentials.password);
+console.log("ENV DEBUG: SES_SENDER =", sesCredentials.sender);
+
 const app = express();
 
 // IMPORTANT: Set trust proxy to handle cookies behind proxies

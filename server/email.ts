@@ -1,21 +1,33 @@
 import AWS from 'aws-sdk';
 import { log } from './vite';
 
+// Get the environment variables directly from the process
+const SES_USERNAME = process.env.SES_USERNAME || '';
+const SES_PASSWORD = process.env.SES_PASSWORD || '';
+const SES_SENDER = process.env.SES_SENDER || '';
+
 // Initialize AWS SES service
 const sesConfig = {
-  accessKeyId: process.env.SES_USERNAME,
-  secretAccessKey: process.env.SES_PASSWORD,
+  accessKeyId: SES_USERNAME,
+  secretAccessKey: SES_PASSWORD,
   region: 'ap-south-1', // Extracted from the host endpoint
 };
+
+// Log loaded credentials (without sensitive information)
+log(`SES configuration loaded: username=${SES_USERNAME ? 'provided' : 'missing'}, password=${SES_PASSWORD ? 'provided' : 'missing'}, sender=${SES_SENDER}`, 'email');
 
 // Initialize the SES object
 const ses = new AWS.SES(sesConfig);
 
 // Check if SES credentials are configured
-if (process.env.SES_USERNAME && process.env.SES_PASSWORD) {
+if (SES_USERNAME && SES_PASSWORD) {
   log('AWS SES credentials configured', 'email');
+  log(`Using SES username: ${SES_USERNAME}`, 'email');
+  log(`Using SES region: ap-south-1`, 'email');
 } else {
   log('AWS SES credentials not found. Email functionality is disabled.', 'email');
+  log(`SES_USERNAME exists: ${!!SES_USERNAME}`, 'email');
+  log(`SES_PASSWORD exists: ${!!SES_PASSWORD}`, 'email');
 }
 
 export interface EmailParams {
@@ -32,13 +44,13 @@ export interface EmailParams {
  * @returns Promise resolving to boolean indicating success
  */
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  if (!process.env.SES_USERNAME || !process.env.SES_PASSWORD) {
+  if (!SES_USERNAME || !SES_PASSWORD) {
     log('Cannot send email: AWS SES credentials not configured', 'email');
     return false;
   }
 
   try {
-    const sender = params.from || process.env.SES_SENDER || 'noreply@campaignhub.com';
+    const sender = params.from || SES_SENDER || 'noreply@campaignhub.com';
     
     const sesParams: AWS.SES.SendEmailRequest = {
       Source: sender,
@@ -115,7 +127,7 @@ export async function sendPasswordResetEmail(
   
   return sendEmail({
     to,
-    from: process.env.SES_SENDER || 'noreply@campaignhub.com',
+    from: SES_SENDER || 'noreply@campaignhub.com',
     subject,
     html,
     text,
