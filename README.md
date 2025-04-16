@@ -90,18 +90,59 @@ Important notes:
 - Do not use quotes around values
 - You can reference the included `.env.example` file for a template
 
-#### 5. Run database migrations
+#### 5. Initialize the database (First-time Setup)
+There are two approaches to set up the database:
+
+##### Option A: Using the automatic database initialization script
 ```bash
+# Install required dependencies
+npm install pg
+
+# Run the interactive database initialization script
+node scripts/initialize_database.js
+```
+This script will:
+1. Create the database and user with appropriate permissions
+2. Create all required tables and indexes
+3. Insert seed data including default admin user
+4. Provide the necessary DATABASE_URL to add to your .env file
+
+When you run the script, it will interactively ask for:
+- PostgreSQL superuser credentials (to create the database)
+- Database name (default: campaign_management)
+- Database user (default: campaign_manager)
+- Database password
+- Host and port information
+
+**Note:** The script creates a default admin user with credentials:
+- Username: admin
+- Password: admin123
+
+Make sure to change this password in production!
+
+##### Option B: Using Drizzle ORM migrations
+If you prefer to use the Drizzle ORM migration system or already have a database set up:
+```bash
+# Generate and run migrations based on your schema
 npx drizzle-kit generate
 npx drizzle-kit push
 ```
 
-#### 6. Build the application
+#### 6. Install build dependencies
+```bash
+# Install Vite as a development dependency
+npm install --save-dev vite @vitejs/plugin-react esbuild
+
+# Alternatively, you can use this command to install all required build dependencies
+npm install --save-dev vite @vitejs/plugin-react esbuild typescript @replit/vite-plugin-cartographer @replit/vite-plugin-runtime-error-modal @replit/vite-plugin-shadcn-theme-json
+```
+
+#### 7. Build the application
 ```bash
 npm run build
 ```
 
-#### 7. Start the server
+#### 8. Start the server
 
 ##### For Linux/Mac:
 ```bash
@@ -145,7 +186,7 @@ build-windows.bat
 npm start
 ```
 
-#### 8. Access the application
+#### 9. Access the application
 Open your browser and navigate to:
 ```
 http://localhost:5000
@@ -173,8 +214,14 @@ npm run dev
 - If you encounter errors loading Vite configuration like:
   - `Cannot find package 'vite' imported from vite.config.ts` 
   - `failed to load config from vite.config.ts`
+  - `vite command not found`
   
-  Use our new build + run solution:
+  Try installing Vite and its dependencies first:
+  ```bash
+  npm install --save-dev vite @vitejs/plugin-react esbuild
+  ```
+  
+  If the error persists, use our build + run solution that bypasses Vite config issues:
   ```bash
   # Build only
   ./build.sh
@@ -210,6 +257,7 @@ npm run dev
 - If the build process fails, check:
   - TypeScript errors with `npm run check`
   - Missing environment variables
+  - Missing Vite dependencies (install with `npm install --save-dev vite @vitejs/plugin-react esbuild`)
   - Node.js version compatibility (v18+ recommended)
   
 - For containerized deployments, use the start-prod.sh script in your entrypoint command
