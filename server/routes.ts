@@ -421,11 +421,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Format contacts data for the API
       const contactsData = contacts.map(contact => [contact.mobile, contact.name]);
 
-      // Call the campaign API
-      const apiKey = process.env.CAMPAIGN_API_KEY;
+      // Get campaign API key from settings
+      const apiKey = settings.campaignApiKey;
       if (!apiKey) {
-        console.error("Campaign API key not found in environment variables");
-        return res.status(500).json({ message: "Campaign API key not configured" });
+        console.error("Campaign API key not found in settings");
+        return res.status(500).json({ message: "Campaign API key not configured in settings. Please configure it in Settings > API Access." });
       }
 
       // Prepare request to campaign API
