@@ -35,12 +35,12 @@ export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     name: 'campaign-session',
     secret: sessionSecret,
-    resave: true,
-    saveUninitialized: true,
+    resave: false, 
+    saveUninitialized: false, // Only save on successful login
     store: storage.sessionStore,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
-      secure: false, // Set to true only in production with HTTPS
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+      secure: process.env.NODE_ENV === 'production', // Set to true only in production with HTTPS
       httpOnly: true,
       sameSite: 'lax',
       path: '/'
@@ -111,35 +111,73 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
+    if (!req.body.username || !req.body.password) {
+      return res.status(400).json({ message: "Username and password are required" });
+    }
+    
     passport.authenticate("local", (err: Error | null, user: SelectUser | false, info: { message: string } | undefined) => {
       if (err) {
+        console.error("Authentication error:", err);
         return next(err);
       }
+      
       if (!user) {
+        console.log("Login failed for username:", req.body.username);
         return res.status(401).json({ message: "Invalid username or password" });
       }
       
+      // Trigger login and session creation
       req.login(user, (err) => {
         if (err) {
+          console.error("Login error:", err);
           return next(err);
         }
         
-        // Save session explicitly to ensure it's stored before response
-        req.session.save((err) => {
-          if (err) {
-            return next(err);
-          }
-          console.log("User authenticated:", user.id, "Session ID:", req.sessionID);
-          return res.status(200).json(user);
-        });
+        // Force session save
+        if (req.session) {
+          req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 7; // 7 days
+          req.session.save((err) => {
+            if (err) {
+              console.error("Session save error:", err);
+              return next(err);
+            }
+            
+            // Log the successful authentication
+            console.log("User authenticated:", user.id, "Session ID:", req.sessionID);
+            
+            // Give the client access to key user information (without sensitive data like password)
+            const safeUser = { ...user, password: undefined };
+            return res.status(200).json(safeUser);
+          });
+        } else {
+          // This shouldn't happen, but just in case
+          console.error("Session object not available after login");
+          return res.status(500).json({ message: "Authentication error" });
+        }
       });
     })(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {
+    const sessionId = req.sessionID;
+    
+    // First logout (removes req.user and clears the session)
     req.logout((err) => {
       if (err) return next(err);
-      res.sendStatus(200);
+      
+      // Then destroy the session completely
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Error destroying session:", err);
+          return next(err);
+        }
+        
+        console.log("User logged out. Session destroyed:", sessionId);
+        
+        // Clear the session cookie
+        res.clearCookie('campaign-session');
+        res.sendStatus(200);
+      });
     });
   });
 

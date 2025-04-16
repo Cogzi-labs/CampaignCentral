@@ -183,7 +183,7 @@ export function CreateCampaignDialog({ open, onOpenChange }: CreateCampaignDialo
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">All Contacts</SelectItem>
+                      <SelectItem value="all">All Contacts</SelectItem>
                       {uniqueLabels.map((label: string) => (
                         <SelectItem key={label} value={label}>
                           {label}

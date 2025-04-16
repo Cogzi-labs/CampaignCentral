@@ -1,9 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
-import { Redirect, Route } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { getQueryFn } from "@/lib/queryClient";
-import { User as SelectUser } from "@shared/schema";
+import { Redirect, Route, useLocation } from "wouter";
+import { useEffect } from "react";
 
 export function ProtectedRoute({
   path,
@@ -12,16 +10,15 @@ export function ProtectedRoute({
   path: string;
   component: () => React.JSX.Element;
 }) {
-  // Direct user check with each protected route
-  const { data: user, isLoading } = useQuery<SelectUser | null>({
-    queryKey: ["/api/user"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
-    retry: 1,
-    retryDelay: 1000,
-    refetchOnWindowFocus: true,
-    staleTime: 0, // Always refetch
-  });
+  const { user, isLoading, refetchUser } = useAuth();
+  const [location, setLocation] = useLocation();
 
+  // Always refetch user data when route is accessed to ensure fresh auth state
+  useEffect(() => {
+    refetchUser();
+  }, [refetchUser, path]);
+
+  // If user is loading, show loading indicator
   if (isLoading) {
     return (
       <Route path={path}>
@@ -32,7 +29,9 @@ export function ProtectedRoute({
     );
   }
 
+  // If no user is found after loading completes, redirect to auth page
   if (!user) {
+    console.log("No authenticated user found, redirecting to auth page");
     return (
       <Route path={path}>
         <Redirect to="/auth" />
@@ -40,5 +39,6 @@ export function ProtectedRoute({
     );
   }
 
+  // User is authenticated, render the requested component
   return <Route path={path} component={Component} />;
 }
