@@ -32,7 +32,8 @@ export default function SettingsPage() {
     wabaApiUrl: '',
     facebookAccessToken: '',
     partnerMobile: '',
-    wabaId: ''
+    wabaId: '',
+    campaignApiKey: ''
   });
   
   // Settings type definition
@@ -43,6 +44,7 @@ export default function SettingsPage() {
     facebookAccessToken: string | null;
     partnerMobile: string | null;
     wabaId: string | null;
+    campaignApiKey: string | null;
     updatedAt: string;
   }
 
@@ -62,7 +64,8 @@ export default function SettingsPage() {
         wabaApiUrl: settings.wabaApiUrl ? settings.wabaApiUrl : '',
         facebookAccessToken: settings.facebookAccessToken ? settings.facebookAccessToken : '',
         partnerMobile: settings.partnerMobile ? settings.partnerMobile : '',
-        wabaId: settings.wabaId ? settings.wabaId : ''
+        wabaId: settings.wabaId ? settings.wabaId : '',
+        campaignApiKey: settings.campaignApiKey ? settings.campaignApiKey : ''
       });
     }
   }, [settings]);
@@ -531,6 +534,23 @@ export default function SettingsPage() {
                         />
                         <p className="text-xs text-gray-500">
                           Your WhatsApp Business Account ID used for campaign API integration
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="campaignApiKey">Campaign API Key</Label>
+                        <Input 
+                          id="campaignApiKey"
+                          type="password"
+                          placeholder="Enter your Campaign API Key"
+                          value={whatsappSettings.campaignApiKey}
+                          onChange={(e) => setWhatsappSettings({
+                            ...whatsappSettings,
+                            campaignApiKey: e.target.value
+                          })}
+                        />
+                        <p className="text-xs text-gray-500">
+                          API key for campaign service to authenticate API requests
                         </p>
                       </div>
                     </div>

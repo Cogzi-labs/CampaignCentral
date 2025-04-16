@@ -122,6 +122,7 @@ export const settings = pgTable("settings", {
   facebookAccessToken: text("facebook_access_token"),
   partnerMobile: text("partner_mobile"), // Partner mobile number for campaign API
   wabaId: text("waba_id"), // WhatsApp Business Account ID
+  campaignApiKey: text("campaign_api_key"), // API key for campaign service
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
@@ -131,6 +132,7 @@ export const insertSettingsSchema = createInsertSchema(settings).pick({
   facebookAccessToken: true,
   partnerMobile: true,
   wabaId: true,
+  campaignApiKey: true,
 });
 
 export type InsertSettings = z.infer<typeof insertSettingsSchema>;
