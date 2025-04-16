@@ -227,14 +227,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           records.push(data);
         })
         .on('end', async () => {
-          // Process and validate each contact
-          const contacts = records.map(record => ({
-            name: record.name || "",
-            mobile: record.mobile || "",
-            location: record.location || "",
-            label: record.label || "",
-            accountId: user.accountId
-          }));
+          // Process and validate each contact - filter out rows with empty name, mobile, or location
+          const contacts = records
+            .filter(record => {
+              return (
+                record.name && record.name.trim() !== "" && 
+                record.mobile && record.mobile.trim() !== "" && 
+                record.location && record.location.trim() !== ""
+              );
+            })
+            .map(record => ({
+              name: record.name.trim(),
+              mobile: record.mobile.trim(),
+              location: record.location.trim(),
+              label: record.label ? record.label.trim() : "",
+              accountId: user.accountId
+            }));
           
           // Import contacts
           const result = await storage.importContacts(contacts, deduplicate);
@@ -242,10 +250,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Clean up temp file
           fs.unlinkSync(file.path);
           
+          // Calculate skipped rows due to missing required fields
+          const skippedDueToMissingFields = records.length - contacts.length;
+          
           res.status(200).json({ 
             message: "Import completed",
             imported: result.imported,
             duplicates: result.duplicates,
+            skipped: skippedDueToMissingFields,
             total: contacts.length
           });
         })

@@ -53,7 +53,7 @@ export function ImportContactsDialog({ open, onOpenChange }: ImportContactsDialo
       queryClient.invalidateQueries({ queryKey: ["/api/contacts"] });
       toast({
         title: "Import successful",
-        description: `${data.imported} contacts imported, ${data.duplicates} duplicates skipped`,
+        description: `${data.imported} contacts imported, ${data.duplicates} duplicates skipped, ${data.skipped || 0} rows skipped (missing required fields)`,
       });
       setFile(null);
       onOpenChange(false);
@@ -130,6 +130,7 @@ export function ImportContactsDialog({ open, onOpenChange }: ImportContactsDialo
           <DialogTitle>Import Contacts</DialogTitle>
           <DialogDescription>
             Upload a CSV file with contact information. The file should have headers for name, mobile, location, and label.
+            <p className="mt-2 text-amber-600 font-medium">Note: Rows with empty name, mobile, or location will be ignored during import.</p>
           </DialogDescription>
           <div className="mt-2">
             <button 
