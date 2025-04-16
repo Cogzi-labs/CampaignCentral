@@ -8,6 +8,7 @@ import { parse } from "csv-parse";
 import fs from "fs";
 import * as path from "path";
 import { sendPasswordResetEmail, sendEmail } from "./email";
+import { sendGridEmail, sendGridPasswordResetEmail } from "./sendgrid";
 import { scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 
