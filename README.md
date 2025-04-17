@@ -66,12 +66,8 @@ npm install
 Create a `.env` file in the root directory with the following variables:
 ```
 # Database Configuration
+# Format: postgresql://username:password@hostname:port/database
 DATABASE_URL=postgresql://<username>:<password>@<host>:<port>/<database>
-PGHOST=<host>
-PGPORT=<port>
-PGUSER=<username>
-PGPASSWORD=<password>
-PGDATABASE=<database>
 
 # Session Configuration
 SESSION_SECRET=your_secret_key_here
