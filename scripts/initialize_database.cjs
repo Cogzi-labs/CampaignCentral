@@ -12,6 +12,7 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 const util = require('util');
+const { spawn } = require('child_process');
 
 // ANSI colors for terminal output
 const colors = {
@@ -72,11 +73,92 @@ function processSqlForNodePg(sql) {
   return filteredLines.join('\n');
 }
 
-// Execute a SQL script
+// Function to run the create_database.js script
+async function createDatabase(superuser, password, host, port, dbName, owner) {
+  return new Promise((resolve, reject) => {
+    console.log(`\n${colors.yellow}Creating database with separate script...${colors.reset}`);
+    
+    const scriptPath = path.join(__dirname, 'create_database.js');
+    const child = spawn('node', [
+      scriptPath, 
+      superuser, 
+      password, 
+      host, 
+      port.toString(), 
+      dbName, 
+      owner
+    ]);
+    
+    // Capture output
+    child.stdout.on('data', (data) => {
+      console.log(data.toString().trim());
+    });
+    
+    child.stderr.on('data', (data) => {
+      console.error(`${colors.red}${data.toString().trim()}${colors.reset}`);
+    });
+    
+    // Handle completion
+    child.on('close', (code) => {
+      if (code === 0) {
+        console.log(`${colors.green}Database creation script completed successfully${colors.reset}`);
+        resolve(true);
+      } else {
+        console.error(`${colors.red}Database creation failed with code ${code}${colors.reset}`);
+        resolve(false);
+      }
+    });
+    
+    child.on('error', (err) => {
+      console.error(`${colors.red}Failed to start database creation script: ${err.message}${colors.reset}`);
+      reject(err);
+    });
+  });
+}
+
+// Execute a SQL script with support for statements that can't run in transactions
 async function executeSQL(client, sql, label) {
   try {
     console.log(`\n${colors.yellow}${label}${colors.reset}`);
-    await client.query(sql);
+    
+    // Split the SQL into individual statements
+    const statements = sql.split(';')
+      .map(statement => statement.trim())
+      .filter(statement => statement.length > 0);
+    
+    // Execute each statement individually
+    for (const statement of statements) {
+      // If this is a CREATE DATABASE command, we need special handling
+      if (statement.toUpperCase().includes('CREATE DATABASE')) {
+        try {
+          // Use pg package's direct connection approach instead
+          console.log(`${colors.yellow}Executing: ${statement}${colors.reset}`);
+          
+          try {
+            // Try to execute directly (might fail if database exists)
+            await client.query(statement + ';');
+            console.log(`${colors.green}Database created successfully${colors.reset}`);
+          } catch (dbError) {
+            // If error is just that database exists, we can continue
+            if (dbError.message.includes("already exists")) {
+              console.log(`${colors.yellow}Note: Database already exists, continuing...${colors.reset}`);
+            } else {
+              // Otherwise, this is a real error
+              throw dbError;
+            }
+          }
+        } catch (err) {
+          console.error(`${colors.red}Error creating database: ${err.message}${colors.reset}`);
+          // Re-throw to indicate failure
+          throw err;
+        }
+      } else if (statement.length > 0) {
+        // For all other statements, use normal query
+        console.log(`${colors.yellow}Executing: ${statement}${colors.reset}`);
+        await client.query(statement + ';');
+      }
+    }
+    
     console.log(`${colors.green}Success!${colors.reset}`);
     return true;
   } catch (err) {
@@ -115,6 +197,17 @@ async function main() {
     // Remove psql meta-commands like \c and \echo
     setupDbSql = processSqlForNodePg(setupDbSql);
 
+    // Step 1: Create database and user
+    console.log(`\n${colors.yellow}Step 1/3: Creating database and user${colors.reset}`);
+    
+    // First, extract non-database-creation statements from setup_db.sql
+    const userCreationSQL = setupDbSql
+      .split(';')
+      .map(statement => statement.trim())
+      .filter(statement => statement.length > 0)
+      .filter(statement => !statement.toUpperCase().includes('CREATE DATABASE'))
+      .join(';\n') + ';';
+    
     // Connect to PostgreSQL as superuser
     const superuserClient = new Client({
       user: superuser,
@@ -127,11 +220,32 @@ async function main() {
     await superuserClient.connect();
     console.log(`${colors.green}Connected to PostgreSQL as ${superuser}${colors.reset}`);
 
-    // Step 1: Create database and user
-    const success1 = await executeSQL(superuserClient, setupDbSql, 'Step 1/3: Creating database and user');
+    // Execute user creation and permissions
+    let success = true;
+    try {
+      console.log(`${colors.yellow}Creating user and setting permissions...${colors.reset}`);
+      await superuserClient.query(userCreationSQL);
+      console.log(`${colors.green}User created successfully${colors.reset}`);
+    } catch (err) {
+      if (err.message.includes('already exists')) {
+        console.log(`${colors.yellow}Note: User already exists, continuing...${colors.reset}`);
+      } else {
+        console.error(`${colors.red}Error: ${err.message}${colors.reset}`);
+        success = false;
+      }
+    }
+    
+    // Create the database using our separate script
+    if (success) {
+      const dbCreationSuccess = await createDatabase(superuser, superuserPassword, host, port, dbName, dbUser);
+      if (!dbCreationSuccess) {
+        success = false;
+      }
+    }
+    
     await superuserClient.end();
 
-    if (!success1) {
+    if (!success) {
       throw new Error('Failed to create database and user');
     }
 
