@@ -6,7 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser, insertUserSchema } from "@shared/schema";
-import { SESSION_CONFIG } from "./config";
+import { SESSION_CONFIG, DB_CONFIG } from "./config";
 
 // Global declaration for TypeScript passport integration
 declare global {
@@ -58,15 +58,15 @@ export function setupAuth(app: Express): void {
     cookie: {
       maxAge: SESSION_CONFIG.cookie.maxAge,
       httpOnly: true, // Prevent JavaScript access
-      sameSite: 'lax', // Most compatible setting for cross-domain
-      secure: false, // Disable secure for all environments during troubleshooting
-      path: '/'
+      sameSite: SESSION_CONFIG.cookie.sameSite, // Use from config
+      secure: SESSION_CONFIG.cookie.secure, // Use from config
+      path: SESSION_CONFIG.cookie.path || '/'
     }
   };
   
   // Log session configuration for debugging
   console.log(`Session configuration: secret=${SESSION_CONFIG.secret.substring(0, 3)}..., cookie.secure=${SESSION_CONFIG.cookie.secure}, cookie.sameSite=${SESSION_CONFIG.cookie.sameSite}`);
-  console.log(`Using ${process.env.DATABASE_URL ? 'PostgreSQL' : 'Memory'} session store`);
+  console.log(`Using ${DB_CONFIG.url ? 'PostgreSQL' : 'Memory'} session store`);
 
   // Session handling middleware
   app.use(session(sessionSettings));
