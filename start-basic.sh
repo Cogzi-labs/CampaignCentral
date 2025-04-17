@@ -1,21 +1,21 @@
 #!/bin/bash
 
-# start-basic.sh - A simplified startup script with maximum compatibility
-# Uses only basic Node.js features, no npx or fancy paths
+# start-basic.sh - Ultra-simple startup script without complex dependencies
+# This script uses direct commands without polyfills or compatibility layers
 
-echo "=== Starting CampaignHub with ultra-compatible startup script ==="
+echo "=== Starting CampaignHub in basic mode ==="
 
 # Load environment variables from .env file
 if [ -f .env ]; then
   echo "Loading environment variables from .env file..."
-  
-  # Use a very simple, portable method to load env vars
-  export $(grep -v '^#' .env | xargs)
-  
+  source .env
   echo "Environment variables loaded successfully"
 else
   echo "Warning: .env file not found"
 fi
+
+# Set Node.js options the simplest way possible
+export NODE_OPTIONS="--no-warnings"
 
 # Check if we should run production or development mode
 if [ -d "dist/client" ] && [ -f "dist/index.js" ]; then
@@ -24,13 +24,10 @@ if [ -d "dist/client" ] && [ -f "dist/index.js" ]; then
 else
   echo "No production build found. Running in DEVELOPMENT mode..."
   
-  # Install required dependencies if they don't exist
-  if [ ! -d "node_modules" ] || [ ! -f "node_modules/.bin/tsx" ]; then
-    echo "Installing required dependencies..."
-    npm install
-  fi
+  # Install minimal dependencies
+  echo "Installing required packages..."
+  npm install --no-save tsx > /dev/null
   
-  # Run the application
-  echo "Starting development server..."
-  NODE_ENV=development node -r tsx/cjs server/index.ts
+  echo "Starting in simple development mode..."
+  NODE_ENV=development npx tsx server/index.ts
 fi

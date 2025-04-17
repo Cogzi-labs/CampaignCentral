@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * Start script for production deployment
  * This script serves as a compatibility layer for various production environments.
@@ -10,89 +8,56 @@
  * 3. Fall back to development mode if build fails
  */
 
-import { existsSync } from 'fs';
-import { spawnSync } from 'child_process';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
+const fs = require('fs');
+const path = require('path');
+const { execSync, spawn } = require('child_process');
 
-// Get current directory
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Check if we have a built version
-const distFilePath = join(__dirname, 'dist', 'index.js');
-const hasBuiltVersion = existsSync(distFilePath);
-
-console.log('Starting CampaignHub application...');
-console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-
-// Set NODE_ENV to production
-process.env.NODE_ENV = 'production';
-
-// Function to run a command and return success status
+/**
+ * Run a command and handle its output
+ */
 function runCommand(command, args, env = {}) {
-  console.log(`Running command: ${command} ${args.join(' ')}`);
-  const result = spawnSync(command, args, { 
-    stdio: 'inherit',
-    env: { ...process.env, ...env }
+  console.log(`Running: ${command} ${args.join(' ')}`);
+  
+  const combinedEnv = { ...process.env, ...env };
+  
+  const proc = spawn(command, args, {
+    env: combinedEnv,
+    stdio: 'inherit'
   });
-  return result.status === 0;
+  
+  proc.on('error', (err) => {
+    console.error(`Command failed: ${err.message}`);
+    process.exit(1);
+  });
+  
+  return proc;
 }
 
-// Starting logic
-if (hasBuiltVersion) {
-  console.log('Using production build from dist/index.js');
-  runCommand('node', ['--enable-source-maps', distFilePath]);
+// Main execution
+console.log('=== CampaignHub Application Starter ===');
+
+// First check if we have a production build
+if (fs.existsSync('dist/index.js') && fs.existsSync('dist/client')) {
+  console.log('Production build found. Running in PRODUCTION mode...');
+  runCommand('node', ['dist/index.js'], { NODE_ENV: 'production' });
 } else {
-  console.log('No production build found, attempting to create build...');
+  console.log('No production build found. Running in DEVELOPMENT mode...');
   
-  // Ensure build dependencies are installed
-  console.log('Checking for build dependencies...');
   try {
-    const checkViteResult = spawnSync('npx', ['--no-install', 'vite', '--version'], { 
-      stdio: 'pipe',
-      encoding: 'utf-8' 
+    // Install development dependencies if needed
+    if (!fs.existsSync('node_modules/.bin/tsx')) {
+      console.log('Installing development dependencies...');
+      execSync('npm install --no-save tsx dotenv');
+    }
+    
+    // Run in development mode
+    console.log('Starting in development mode...');
+    runCommand('npx', ['tsx', 'server/index.ts'], { 
+      NODE_ENV: 'development',
+      NODE_OPTIONS: '--no-warnings'
     });
-    
-    if (checkViteResult.status !== 0) {
-      console.log('Vite not found in local node_modules, installing build dependencies...');
-      runCommand('npm', ['install', '--no-save', 'vite', 'esbuild']);
-    } else {
-      console.log(`Vite found: ${checkViteResult.stdout.trim()}`);
-    }
-  } catch (error) {
-    console.log('Error checking for Vite, will try to install:', error.message);
-    runCommand('npm', ['install', '--no-save', 'vite', 'esbuild']);
-  }
-  
-  // Use npx to ensure we have the right path to the binaries
-  console.log('Building client assets with Vite...');
-  const viteBuildSuccess = runCommand('npx', ['vite', 'build'], { NODE_ENV: 'production' });
-  
-  if (viteBuildSuccess) {
-    console.log('Building server with esbuild...');
-    const esbuildSuccess = runCommand('npx', [
-      'esbuild', 
-      'server/index.ts', 
-      '--platform=node', 
-      '--packages=external', 
-      '--bundle', 
-      '--format=esm', 
-      '--outdir=dist'
-    ], { NODE_ENV: 'production' });
-    
-    if (esbuildSuccess && existsSync(distFilePath)) {
-      console.log('Build successful, starting server');
-      runCommand('node', ['--enable-source-maps', distFilePath]);
-    } else {
-      console.log('Server build failed, falling back to development mode');
-      runCommand('npx', ['tsx', 'server/index.ts']);
-    }
-  } else {
-    console.log('Client build failed, falling back to development mode');
-    console.log('Common build failures:');
-    console.log('- Missing dependencies (vite, esbuild)');
-    console.log('- TypeScript errors in the codebase');
-    runCommand('npx', ['tsx', 'server/index.ts']);
+  } catch (err) {
+    console.error(`Failed to start application: ${err.message}`);
+    process.exit(1);
   }
 }

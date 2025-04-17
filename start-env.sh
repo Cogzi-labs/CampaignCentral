@@ -1,57 +1,52 @@
 #!/bin/bash
 
-# start-env.sh - Start script that focuses on loading .env variables
-# This script explicitly loads .env variables before starting the application
+# start-env.sh - Advanced environment variable handling startup script
 
-echo "=== Starting CampaignHub with explicit environment variable loading ==="
+echo "=== Starting CampaignHub with enhanced environment handling ==="
 
-# Load environment variables from .env file
+# Load environment variables from .env file with detailed output
 if [ -f .env ]; then
   echo "Loading environment variables from .env file..."
-  # Use a safer method that handles empty lines and special characters better
-  while IFS= read -r line || [ -n "$line" ]; do
+  
+  # Process each line in .env file
+  while IFS= read -r line || [[ -n "$line" ]]; do
     # Skip comments and empty lines
-    if [[ ! "$line" =~ ^# ]] && [[ -n "$line" ]]; then
-      # Extract variable and value
-      if [[ "$line" =~ ^([^=]+)=(.*)$ ]]; then
-        key="${BASH_REMATCH[1]}"
-        value="${BASH_REMATCH[2]}"
-        export "$key=$value"
+    if [[ ! "$line" =~ ^\s*# && -n "$line" ]]; then
+      # Extract variable name
+      varname=$(echo "$line" | cut -d '=' -f 1)
+      
+      # Skip export keywords if present
+      if [[ "$varname" == "export "* ]]; then
+        varname=$(echo "$varname" | sed 's/^export //')
       fi
+      
+      # Export the full line (handles complex values with spaces, quotes, etc.)
+      export "$line"
+      
+      # Output variable name (not value for security)
+      echo "  Loaded: $varname"
     fi
   done < .env
+  
   echo "Environment variables loaded successfully"
 else
-  echo "ERROR: .env file not found. Application may not function correctly."
+  echo "Warning: .env file not found"
 fi
 
-# Debug output - List environment variables (excluding sensitive values)
-echo "Environment variables loaded:"
-echo "DATABASE_URL exists: $(if [ -n "$DATABASE_URL" ]; then echo "Yes"; else echo "No"; fi)"
-echo "SES_REGION: $SES_REGION"
-echo "SES_SENDER: $SES_SENDER"
-echo "SES_USERNAME: $SES_USERNAME" 
-echo "SES_PASSWORD exists: $(if [ -n "$SES_PASSWORD" ]; then echo "Yes"; else echo "No"; fi)"
+# Show critical environment variables (without showing actual values)
+echo "Critical environment variables check:"
+for var in "DATABASE_URL" "NODE_ENV" "PORT" "SESSION_SECRET"; do
+  if [ -n "${!var}" ]; then
+    echo "  $var: ✓ (set)"
+  else
+    echo "  $var: ✗ (not set)"
+  fi
+done
 
-# Check if we have a built version
-if [ -d "dist/client" ] && [ -f "dist/index.js" ]; then
-  echo "Production build found. Starting production server..."
-  NODE_ENV=production node -r dotenv/config dist/index.js
-else
-  echo "Development mode. Starting development server..."
-  
-  # Install tsx locally if needed and call it directly through node_modules
-  if [ ! -f "node_modules/.bin/tsx" ]; then
-    echo "tsx not found, installing it locally..."
-    npm install --no-save tsx
-  fi
-  
-  # Install dotenv if needed
-  if [ ! -f "node_modules/.bin/dotenv" ]; then
-    echo "dotenv not found, installing it locally..."
-    npm install --no-save dotenv
-  fi
-  
-  # Run using explicit path to tsx in node_modules (much more reliable)
-  NODE_ENV=development ./node_modules/.bin/tsx -r dotenv/config server/index.ts
-fi
+# Install essential packages
+echo "Installing essential packages..."
+npm install --no-save tsx dotenv > /dev/null
+
+# Run the application
+echo "Starting the application..."
+NODE_ENV=development npx tsx server/index.ts
