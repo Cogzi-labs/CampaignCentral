@@ -1,27 +1,28 @@
 #!/bin/bash
 
-# run-prod.sh - Production startup script that avoids Vite configuration issues
-# This script first builds the app using our custom build script and then runs it
+# run-prod.sh - Production mode runner for CampaignHub
+# This script assumes the application is already built
 
-echo "=== Starting CampaignHub in production mode ==="
+echo "=== Running CampaignHub in production mode ==="
 
-# Check if we need to build
-if [ ! -d "dist/client" ] || [ ! -f "dist/index.js" ]; then
-  echo "Production build not found or incomplete"
-  echo "Running custom build script..."
-  
-  # Run our custom build script
-  ./build.sh
-  
-  # Check if build was successful
-  if [ ! -d "dist/client" ] || [ ! -f "dist/index.js" ]; then
-    echo "Build failed, cannot start production server"
-    echo "Falling back to development mode..."
-    NODE_ENV=development npx tsx server/index.ts
-    exit 1
-  fi
+# Load environment variables
+if [ -f .env ]; then
+  echo "Loading environment variables from .env file..."
+  source .env
+  echo "Environment variables loaded"
+else
+  echo "Warning: .env file not found"
 fi
 
-# Start the production server
+# Check if we have a production build
+if [ ! -d "dist/client" ] || [ ! -f "dist/index.js" ]; then
+  echo "Error: Production build not found. Please run './build.sh' first."
+  exit 1
+fi
+
+# Set environment to production
+export NODE_ENV=production
+
+# Run the application
 echo "Starting production server..."
-NODE_ENV=production node dist/index.js
+node dist/index.js

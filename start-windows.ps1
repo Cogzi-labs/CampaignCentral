@@ -1,59 +1,36 @@
-# CampaignHub Windows PowerShell Startup Script
-Write-Host "=== Starting CampaignHub on Windows using PowerShell ===" -ForegroundColor Green
+# CampaignHub Startup PowerShell Script for Windows
 
-# Function to load environment variables from .env file
-function Load-EnvFile {
-    param (
-        [string]$envFile = ".env"
-    )
-    
-    if (Test-Path $envFile) {
-        Write-Host "Loading environment variables from $envFile..." -ForegroundColor Cyan
-        
-        # Read the .env file line by line
-        Get-Content $envFile | ForEach-Object {
-            # Skip comments and empty lines
-            if ($_ -notmatch "^\s*#" -and $_ -match "=") {
-                $line = $_.Trim()
-                $key, $value = $line -split "=", 2
-                
-                # Set as environment variable
-                [Environment]::SetEnvironmentVariable($key, $value, "Process")
-                Write-Host "  Set: $key" -ForegroundColor Gray
-            }
+Write-Host "=== CampaignHub Startup (Windows PowerShell) ===" -ForegroundColor Green
+
+# Load environment variables from .env file if it exists
+if (Test-Path ".env") {
+    Write-Host "Loading environment variables from .env file..." -ForegroundColor Cyan
+    Get-Content ".env" | ForEach-Object {
+        if (-not $_.StartsWith("#") -and $_.Length -gt 0) {
+            $name, $value = $_.Split('=', 2)
+            [Environment]::SetEnvironmentVariable($name, $value, "Process")
+            Write-Host "  Loaded: $name" -ForegroundColor DarkGray
         }
-        
-        Write-Host "Environment variables loaded successfully" -ForegroundColor Green
-    } else {
-        Write-Host "ERROR: .env file not found at: $envFile" -ForegroundColor Red
-        Write-Host "Application may not function correctly without environment variables." -ForegroundColor Yellow
     }
+} else {
+    Write-Host "Warning: .env file not found" -ForegroundColor Yellow
 }
 
-# Load environment variables
-Load-EnvFile
-
-# Debug output for key environment variables
-Write-Host "`nEnvironment Variables Check:" -ForegroundColor Yellow
-Write-Host "DATABASE_URL exists: $(if ([string]::IsNullOrEmpty($env:DATABASE_URL)) { 'No' } else { 'Yes' })"
-Write-Host "SES_REGION: $env:SES_REGION"
-Write-Host "SES_SENDER: $env:SES_SENDER"
-Write-Host "SES_USERNAME: $env:SES_USERNAME"
-Write-Host "SES_PASSWORD exists: $(if ([string]::IsNullOrEmpty($env:SES_PASSWORD)) { 'No' } else { 'Yes' })"
-Write-Host "PGDATABASE: $env:PGDATABASE"
-Write-Host "PGHOST: $env:PGHOST"
-
-# Check if we have a built version
-if (Test-Path "dist/index.js") {
-    Write-Host "`nProduction build found. Starting production server..." -ForegroundColor Green
-    # Set NODE_ENV to production
+# Check if we have a production build
+if ((Test-Path "dist\index.js") -and (Test-Path "dist\client")) {
+    Write-Host "Production build found. Running in PRODUCTION mode..." -ForegroundColor Green
     $env:NODE_ENV = "production"
-    # Start the server
-    node dist/index.js
+    node dist\index.js
 } else {
-    Write-Host "`nDevelopment mode. Starting development server..." -ForegroundColor Yellow
-    # Set NODE_ENV to development
+    Write-Host "No production build found. Running in DEVELOPMENT mode..." -ForegroundColor Yellow
+    
+    # Install dependencies if needed
+    Write-Host "Installing dependencies..." -ForegroundColor Cyan
+    npm install --no-save tsx
+    
+    # Run in development mode
+    Write-Host "Starting in development mode..." -ForegroundColor Green
     $env:NODE_ENV = "development"
-    # Start the server using tsx
-    npx tsx server/index.ts
+    $env:NODE_OPTIONS = "--no-warnings"
+    npx tsx server\index.ts
 }
