@@ -2,8 +2,6 @@
 
 A full-stack campaign management system with contact organization, de-duplication, and campaign launch capabilities.
 
-> **Note:** For detailed information about starting the application, environment configuration, and troubleshooting, see [STARTUP.md](STARTUP.md).
-
 ## Features
 
 - **User Authentication**: Secure login and registration
@@ -144,29 +142,24 @@ npm run build
 
 ##### For Linux/Mac:
 ```bash
-# RECOMMENDED: Simple, unified startup script with environment checks
+# Make sure the script is executable
+chmod +x start.sh
+
+# Run the application
 ./start.sh
-
-# Production-optimized startup script
-./start-prod.sh
-
-# Minimal dependency script for limited environments
-./simple-start.sh 
-
-# Using npm start (may have issues with Vite config)
-npm start
 ```
 
 ##### For Windows:
 ```cmd
-# RECOMMENDED: Windows-compatible startup script
+# Run the application
 start-windows.bat
-
-# Using npm (may have issues with Vite config)
-npm start
 ```
 
-For detailed information about startup options, environment variables, and troubleshooting, see the `STARTUP.md` file.
+The startup scripts will automatically:
+- Load environment variables from .env file
+- Construct DATABASE_URL from PostgreSQL variables if needed
+- Generate a SESSION_SECRET if not provided
+- Detect whether to run in production or development mode
 
 #### 9. Access the application
 Open your browser and navigate to:
@@ -223,68 +216,37 @@ npm run dev
   - `failed to load config from vite.config.ts`
   - `vite command not found`
   
-  Try installing Vite and its dependencies first:
+  Install Vite and its dependencies:
   ```bash
   npm install --save-dev vite @vitejs/plugin-react esbuild
   ```
+
+- For environment variable issues, check that your `.env` file:
+  - Is in the root directory
+  - Contains all required variables (see .env.example)
+  - Has no spaces around equal signs (=)
+  - Has no quotes around values
   
-  If the error persists, use our build + run solution that bypasses Vite config issues:
-  ```bash
-  # Build only
-  ./build.sh
-  
-  # Build and run in one step
-  ./run-prod.sh
-  ```
-  
-  These scripts bypass Vite config loading issues by using a temporary JS configuration.
-  
-- If you encounter environment variable loading issues:
-  ```bash
-  # Use our environment-focused script
-  ./start-env.sh
-  ```
-  
-  This script explicitly loads the variables from your .env file before starting the application.
-  
-- For other deployment issues, we provide alternative scripts:
-  - Simple start script with minimal complexity: `./simple-start.sh`
-  - Basic start script: `./start-prod.sh`
-  - Detailed logging: `./start.sh` 
-  - Cross-platform Node.js script: `node start.js`
-  - Windows batch files: `start-windows.bat`, `run-prod-windows.bat`
-  - Windows PowerShell: `.\start-windows.ps1`
-  
-- All our start scripts will:
-  - Automatically handle both production and development environments
-  - Install necessary build dependencies if missing
-  - Detect whether a build exists and create one if needed
-  - Fall back to development mode if the build fails
+- Our start scripts will automatically:
+  - Handle both production and development environments
+  - Detect whether to use the production build or development mode
+  - Construct DATABASE_URL from individual PG* variables if needed
+  - Generate a SESSION_SECRET if not provided
   
 - If the build process fails, check:
   - TypeScript errors with `npm run check`
   - Missing environment variables
-  - Missing Vite dependencies (install with `npm install --save-dev vite @vitejs/plugin-react esbuild`)
   - Node.js version compatibility (v18+ recommended)
   
-- For containerized deployments, use the start-prod.sh script in your entrypoint command
+- For containerized deployments, use start-prod.sh in your entrypoint command
 
 ### Windows-Specific Issues
-- If CMD batch files don't work correctly, try the PowerShell script (`start-windows.ps1`)
-- If you get "Permission denied" errors when running PowerShell scripts:
-  1. Open PowerShell as administrator
-  2. Run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
-  3. Try running the script again: `.\start-windows.ps1`
-- Path separators in Windows use backslash (`\`) instead of forward slash (`/`), our Windows scripts handle this automatically
+- Make sure your .env file has no quotes around values
 - If environment variables aren't loading correctly:
-  1. Make sure your .env file doesn't have quotes around values
-  2. Try setting them manually before running: `set DATABASE_URL=your_url` or `$env:DATABASE_URL="your_url"` in PowerShell
-  3. Use our cross-platform environment loader:
-     ```
-     node -r ./load-env.js dist/index.js
-     ```
-     This works on Windows, Mac, and Linux and ensures .env variables are properly loaded
-  4. Restart your terminal after making any changes
+  - Try setting them manually in the command prompt: `set DATABASE_URL=your_url`
+  - Or in PowerShell: `$env:DATABASE_URL="your_url"`
+  - Restart your terminal after making any changes
+- The start-windows.bat script handles Windows path separators automatically
 
 ### Email Sending Issues
 - For AWS SES email functionality, make sure these environment variables are set:
