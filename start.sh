@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# Simple startup script for CampaignHub
+# Standard startup script for CampaignHub
+
+echo "Starting CampaignHub..."
 
 # Load environment variables
 if [ -f .env ]; then
@@ -11,7 +13,7 @@ if [ -f .env ]; then
   source .env
   set +a
   
-  echo "Environment variables loaded from .env file."
+  echo "Environment variables loaded."
 else
   echo "No .env file found. Using environment variables if available."
 fi
@@ -47,5 +49,5 @@ if [ -d "dist/client" ] && [ -f "dist/index.js" ]; then
 else
   # Development mode
   echo "Starting in DEVELOPMENT mode..."
-  NODE_ENV=development npx tsx server/index.ts
+  npm run dev
 fi

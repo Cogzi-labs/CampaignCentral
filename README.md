@@ -142,22 +142,17 @@ npm run build
 
 ##### For Linux/Mac:
 ```bash
-# Standard startup
+# Make sure the script is executable
 chmod +x start.sh
-./start.sh
 
-# If you encounter path resolution errors, use the patched script:
-chmod +x fixed-start.sh
-./fixed-start.sh
+# Run the application
+./start.sh
 ```
 
 ##### For Windows:
 ```cmd
-# Standard startup
+# Run the application
 start-windows.bat
-
-# If you encounter path resolution errors, use the patched script:
-fixed-start-windows.bat
 ```
 
 The startup scripts will automatically:
@@ -165,9 +160,6 @@ The startup scripts will automatically:
 - Construct DATABASE_URL from PostgreSQL variables if needed
 - Generate a SESSION_SECRET if not provided
 - Detect whether to run in production or development mode
-
-##### Path Resolution Fix
-If you encounter errors like: `TypeError [ERR_INVALID_ARG_TYPE]: The "paths[0]" argument must be of type string. Received undefined`, use the patched startup scripts which implement Node.js runtime fixes without modifying sensitive files.
 
 #### 9. Access the application
 Open your browser and navigate to:
@@ -178,27 +170,8 @@ http://localhost:5000
 ### Development Mode
 If you want to run the application in development mode with hot reloading:
 
-#### Standard Startup
 ```bash
 npm run dev
-```
-
-#### Patched Startup for Path Resolution Issues
-If you encounter path resolution errors like `Error: ENOENT: no such file or directory, open '/home/ubuntu/client/index.html'`, use the patched dev script:
-
-##### For Linux/Mac:
-```bash
-# Make the script executable
-chmod +x dev-patched.sh
-
-# Run with path resolution patches
-./dev-patched.sh
-```
-
-##### For Windows:
-```cmd
-# Run with path resolution patches
-dev-patched.bat
 ```
 
 ## Important Notes
@@ -208,35 +181,7 @@ dev-patched.bat
 
 ## Troubleshooting
 
-### Path Resolution Issues
-If you encounter errors like:
-- `TypeError [ERR_INVALID_ARG_TYPE]: The "paths[0]" argument must be of type string. Received undefined`
-- `Error: ENOENT: no such file or directory, open '/home/ubuntu/client/index.html'`
-
-These are path resolution issues that can occur in different environments. We've provided several solutions:
-
-1. **Use the patched scripts**: Use `fixed-start.sh` (Linux/Mac) or `fixed-start-windows.bat` (Windows) for a complete application startup, or `dev-patched.sh`/`dev-patched.bat` for development mode.
-
-2. **Manual runtime patch**: If you need to run with npm commands, use:
-   ```bash
-   NODE_OPTIONS="--require ./vite-runtime-patch.cjs" npm run dev
-   ```
-
-3. **Symbolic link fix**: If the error mentions a specific path (`/home/ubuntu/client/index.html`), create the path structure:
-   ```bash
-   mkdir -p ~/ubuntu
-   ln -sf "$(pwd)/client" ~/ubuntu/
-   ```
-   
-   On Windows:
-   ```cmd
-   mkdir %USERPROFILE%\\ubuntu
-   mklink /D %USERPROFILE%\\ubuntu\client %CD%\client
-   ```
-
-Our patched scripts handle all of these fixes automatically.
-
-### Database Issue
+### Database Issues
 - If you encounter database connection issues, verify your DATABASE_URL is correct
 - Make sure PostgreSQL is running and accessible
 - Check that the required ports (default: 5432 for PostgreSQL) are not being used by other applications
