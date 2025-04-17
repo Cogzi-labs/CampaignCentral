@@ -33,6 +33,12 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const timestamp = new Date().getTime(); // Add timestamp for cache busting
+    
+    // Check if queryKey[0] exists and is a string
+    if (!queryKey || !queryKey[0] || typeof queryKey[0] !== 'string') {
+      throw new Error(`Invalid query key: ${JSON.stringify(queryKey)}`);
+    }
+    
     const queryKeyString = queryKey[0] as string;
     const url = `${queryKeyString}${queryKeyString.includes('?') ? '&' : '?'}_t=${timestamp}`;
     
