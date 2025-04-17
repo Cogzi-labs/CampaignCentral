@@ -78,7 +78,7 @@ async function createDatabase(superuser, password, host, port, dbName, owner) {
   return new Promise((resolve, reject) => {
     console.log(`\n${colors.yellow}Creating database with separate script...${colors.reset}`);
     
-    const scriptPath = path.join(__dirname, 'create_database.js');
+    const scriptPath = path.join(__dirname, 'create_database.cjs');
     const child = spawn('node', [
       scriptPath, 
       superuser, 
