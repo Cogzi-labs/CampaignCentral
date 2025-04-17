@@ -331,7 +331,9 @@ npm run dev
 │   └── schema.ts          # Database schema definitions
 ├── scripts/               # Database initialization and utility scripts
 │   ├── initialize_database.cjs  # Interactive database setup script
-│   ├── setup_db.sql       # Creates database and user
+│   ├── create_database.cjs      # Handles database creation outside transaction
+│   ├── setup_db.sql       # Creates database user
+│   ├── grant_privileges.sql     # Grants database privileges
 │   ├── create_tables.sql  # Creates all tables and indexes
 │   └── seed_data.sql      # Inserts default data
 └── ...
