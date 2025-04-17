@@ -3,7 +3,31 @@
 # start.sh - Robust startup script for production and development environments
 # This script handles various deployment environments by checking what's available
 
-echo "Starting CampaignHub application..."
+echo "=== Starting CampaignHub application ==="
+
+# Load environment variables from .env file
+if [ -f .env ]; then
+  echo "Loading environment variables from .env file..."
+  # Use a safer method that handles empty lines and special characters better
+  while IFS= read -r line || [ -n "$line" ]; do
+    # Skip comments and empty lines
+    if [[ ! "$line" =~ ^# ]] && [[ -n "$line" ]]; then
+      # Extract variable and value
+      if [[ "$line" =~ ^([^=]+)=(.*)$ ]]; then
+        key="${BASH_REMATCH[1]}"
+        value="${BASH_REMATCH[2]}"
+        export "$key=$value"
+      fi
+    fi
+  done < .env
+  echo "Environment variables loaded successfully"
+else
+  echo "Warning: .env file not found"
+fi
+
+# Debug output - List key environment variables (excluding sensitive values)
+echo "Environment variables loaded:"
+echo "DATABASE_URL exists: $(if [ -n "$DATABASE_URL" ]; then echo "Yes"; else echo "No"; fi)"
 
 # Detect if we're in a production environment
 if [ "$NODE_ENV" = "production" ]; then
