@@ -14,8 +14,11 @@ const path = require('path');
 function loadEnv() {
   console.log('Loading environment variables from .env file...');
   
+  // Use current working directory by default
+  const cwd = process.cwd();
+  
   // Find .env file in the current directory
-  const envPath = path.resolve(process.cwd(), '.env');
+  const envPath = path.resolve(cwd, '.env');
   
   if (!fs.existsSync(envPath)) {
     console.warn('Warning: .env file not found at:', envPath);
@@ -48,7 +51,14 @@ function loadEnv() {
       }
     });
     
-    console.log(`Environment variables loaded: ${varsLoaded} variables`);
+    console.log(`Environment variables loaded: ${varsLoaded} variables from ${envPath}`);
+    
+    // Check for DATABASE_URL
+    if (process.env.DATABASE_URL) {
+      console.log('Database connection string found');
+    } else {
+      console.warn('Warning: DATABASE_URL not found in .env file');
+    }
   } catch (error) {
     console.error('Error loading .env file:', error.message);
   }

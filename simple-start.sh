@@ -8,8 +8,19 @@ echo "=== Starting CampaignHub with simplified startup ==="
 # Load environment variables from .env file
 if [ -f .env ]; then
   echo "Loading environment variables from .env file..."
-  export $(grep -v '^#' .env | xargs)
-  echo "Environment variables loaded"
+  # Use a safer method that handles empty lines and special characters better
+  while IFS= read -r line || [ -n "$line" ]; do
+    # Skip comments and empty lines
+    if [[ ! "$line" =~ ^# ]] && [[ -n "$line" ]]; then
+      # Extract variable and value
+      if [[ "$line" =~ ^([^=]+)=(.*)$ ]]; then
+        key="${BASH_REMATCH[1]}"
+        value="${BASH_REMATCH[2]}"
+        export "$key=$value"
+      fi
+    fi
+  done < .env
+  echo "Environment variables loaded successfully"
 else
   echo "Warning: .env file not found"
 fi

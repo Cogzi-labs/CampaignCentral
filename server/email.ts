@@ -8,7 +8,7 @@ dotenv.config();
 // Get credentials directly from environment
 const SES_USERNAME = process.env.SES_USERNAME || '';
 const SES_PASSWORD = process.env.SES_PASSWORD || '';
-const SES_SENDER = process.env.SES_SENDER || 'balaji@ce.cogzi.io'; // Use environment or default
+const SES_SENDER = process.env.SES_SENDER || 'contact@ce.cogzi.io'; // Use environment or default
 const SES_REGION = process.env.SES_REGION || 'ap-south-1'; // Default to ap-south-1 if not provided
 
 // Set the AWS SDK configuration globally to ensure consistent credentials

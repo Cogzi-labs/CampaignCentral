@@ -9,8 +9,7 @@ dotenv.config();
 // Get SES credentials directly from environment
 const SES_USERNAME = process.env.SES_USERNAME || '';
 const SES_PASSWORD = process.env.SES_PASSWORD || '';
-// Note: there's a mismatch - in code we're using balaji@ce.cogzi.io but the env var is contact@ce.cogzi.io
-const SES_SENDER = 'balaji@ce.cogzi.io'; // Hardcoded for testing
+const SES_SENDER = process.env.SES_SENDER || 'contact@ce.cogzi.io';
 const SES_REGION = process.env.SES_REGION || 'ap-south-1';
 
 console.log(`Testing AWS SES with the following configuration:`);
