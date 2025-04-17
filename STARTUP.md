@@ -1,38 +1,97 @@
-# CampaignHub Startup
-
-This document explains how to start the CampaignHub application.
+# Campaign Central - Startup Guide
 
 ## Quick Start
 
-- On Unix/Linux/Mac: `./start.sh`
-- On Windows (Development only): `start-windows.bat`
+### For Linux/Mac:
+```bash
+# Make sure the script is executable
+chmod +x start.sh
 
-## Scripts
+# Run the application
+./start.sh
+```
 
-### `start.sh`
-The main script for starting the application in a Unix environment.
+### For Windows:
+```batch
+# Run the application in development mode
+start-windows.bat
+```
+
+## Startup Script Options
+
+The application includes several startup scripts for different environments:
+
+1. **`start.sh`** - The main startup script with comprehensive error checking and environment handling
+2. **`start-prod.sh`** - Production-optimized startup script
+3. **`simple-start.sh`** - Minimal dependency script for environments with limited features
+4. **`start-windows.bat`** - Windows-compatible startup script (for development only)
+
+Choose the script that best fits your environment.
+
+## Environment Variables
+
+The application requires certain environment variables to function properly. These can be set in a `.env` file in the root directory.
+
+### Required Environment Variables
+
+1. **Database Configuration**:
+   - `DATABASE_URL`: The PostgreSQL connection string
+   - Alternatively, you can set individual variables:
+     - `PGHOST`: PostgreSQL host
+     - `PGUSER`: PostgreSQL username
+     - `PGPASSWORD`: PostgreSQL password
+     - `PGDATABASE`: PostgreSQL database name
+     - `PGPORT`: PostgreSQL port (defaults to 5432)
+
+2. **Email Configuration (AWS SES)**:
+   - `SES_AUTH`: Authentication type (default: "login")
+   - `SES_HOST`: SES SMTP host
+   - `SES_PORT`: SES SMTP port
+   - `SES_USERNAME`: SES SMTP username
+   - `SES_PASSWORD`: SES SMTP password
+   - `SES_SENDER`: Email sender address
+   - `SES_REGION`: AWS region for SES
+
+3. **Session Configuration**:
+   - `SESSION_SECRET`: Secret for session cookie encryption (auto-generated if not provided)
+
+4. **Campaign API Configuration**:
+   - `CAMPAIGN_API_KEY`: API key for the campaign service
+
+### Optional Environment Variables
+
+- `PORT`: The port to run the server on (default: 5000)
+- `NODE_ENV`: Set to "production" for production mode, or "development" for development mode
+
+## Example .env File
+
+See `.env.example` for a template of environment variables.
+
+## Running in Production
+
+For production, build the application first:
+
+```bash
+npm run build
+```
+
+Then run the start script, which will detect the build and run in production mode:
+
 ```bash
 ./start.sh
 ```
-- Loads environment variables from .env if present
-- Automatically detects development/production mode
-- Uses tsx for TypeScript execution in development mode
-
-### `start-windows.bat`
-For Windows development environments:
-```
-start-windows.bat
-```
-- For development and testing only, not for production deployment
-- Automatically detects development/production mode
-- Uses tsx for TypeScript execution in development mode
 
 ## Troubleshooting
 
-If you encounter startup issues:
+1. **Database Connection Issues**:
+   - Ensure your PostgreSQL server is running
+   - Verify the database connection details are correct
+   - Check that the database exists and the user has the correct permissions
 
-1. Check that .env file exists with proper configuration
-2. Verify Node.js is installed and up-to-date
-3. Ensure PostgreSQL database is running and accessible
-4. Check that all required environment variables are set (DATABASE_URL, etc.)
-5. Verify file permissions on Unix (scripts should be executable with `chmod +x script.sh`)
+2. **Permission Denied Error**:
+   - Ensure the start scripts are executable: `chmod +x start.sh`
+
+3. **Email Sending Issues**:
+   - Verify your AWS SES credentials
+   - Ensure the sender email is verified in AWS SES
+   - Check for SES sending limits in your AWS account

@@ -1,37 +1,38 @@
 #!/bin/bash
 
-# start-prod.sh - Simple production startup script that solves the vite import issue
-# This script focuses specifically on resolving the "Cannot find package 'vite'" error
+# Production startup script for CampaignCentral
+# This script is designed to be simple and have minimal dependencies
 
-echo "Starting CampaignHub in production mode"
-
-# Check if we need to build
-if [ ! -d "dist" ] || [ ! -f "dist/index.js" ]; then
-  echo "Production build not found, creating one now..."
-
-  # Clean up any previous partial builds
-  rm -rf dist
-
-  # Install vite and esbuild explicitly
-  echo "Installing build dependencies..."
-  npm install --no-save vite esbuild @vitejs/plugin-react
-
-  # Build the client first
-  echo "Building client..."
-  NODE_ENV=production ./node_modules/.bin/vite build
-
-  # Then build the server
-  echo "Building server..."
-  NODE_ENV=production ./node_modules/.bin/esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
-else
-  echo "Using existing production build"
+# Load environment variables
+if [ -f .env ]; then
+  # Export all variables from .env file to environment
+  set -a
+  source .env
+  set +a
+  echo "Loaded environment variables from .env file"
 fi
 
-# Start the server
-if [ -f "dist/index.js" ]; then
-  echo "Starting production server..."
-  NODE_ENV=production node dist/index.js
-else
-  echo "Build failed, falling back to development mode"
-  NODE_ENV=production npx tsx server/index.ts
+# Check for DATABASE_URL
+if [ -z "$DATABASE_URL" ] && [ -n "$PGHOST" ] && [ -n "$PGUSER" ] && [ -n "$PGPASSWORD" ] && [ -n "$PGDATABASE" ]; then
+  # Construct DATABASE_URL from individual PostgreSQL variables
+  PGPORT=${PGPORT:-5432}
+  export DATABASE_URL="postgresql://$PGUSER:$PGPASSWORD@$PGHOST:$PGPORT/$PGDATABASE"
+  echo "Constructed DATABASE_URL from PostgreSQL environment variables"
 fi
+
+# Verify critical variables
+if [ -z "$DATABASE_URL" ]; then
+  echo "ERROR: DATABASE_URL is not set"
+  echo "Please set DATABASE_URL environment variable or the individual PostgreSQL variables"
+  exit 1
+fi
+
+# Random session secret if not provided
+if [ -z "$SESSION_SECRET" ]; then
+  export SESSION_SECRET=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 32)
+  echo "Generated random SESSION_SECRET for this session"
+fi
+
+# Start the application in production mode
+echo "Starting Campaign Central in PRODUCTION mode..."
+NODE_ENV=production exec node dist/index.js
