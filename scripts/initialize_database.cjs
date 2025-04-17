@@ -184,18 +184,25 @@ async function main() {
 
     // Read SQL files
     let setupDbSql = readSqlFile('setup_db.sql');
+    let grantPrivilegesSql = readSqlFile('grant_privileges.sql');
     const createTablesSql = readSqlFile('create_tables.sql');
     const seedDataSql = readSqlFile('seed_data.sql');
 
-    // Replace placeholders in setup SQL
+    // Replace placeholders in SQL files
     setupDbSql = replacePlaceholders(setupDbSql, {
       'campaign_manager': dbUser,
       'your_secure_password': dbPassword,
       'campaign_management': dbName
     });
     
+    grantPrivilegesSql = replacePlaceholders(grantPrivilegesSql, {
+      'campaign_manager': dbUser,
+      'campaign_management': dbName
+    });
+    
     // Remove psql meta-commands like \c and \echo
     setupDbSql = processSqlForNodePg(setupDbSql);
+    grantPrivilegesSql = processSqlForNodePg(grantPrivilegesSql);
 
     // Step 1: Create database and user
     console.log(`\n${colors.yellow}Step 1/3: Creating database and user${colors.reset}`);
@@ -240,6 +247,16 @@ async function main() {
       const dbCreationSuccess = await createDatabase(superuser, superuserPassword, host, port, dbName, dbUser);
       if (!dbCreationSuccess) {
         success = false;
+      } else {
+        // Grant privileges after database creation
+        try {
+          console.log(`${colors.yellow}Setting database privileges...${colors.reset}`);
+          await superuserClient.query(grantPrivilegesSql);
+          console.log(`${colors.green}Database privileges granted successfully${colors.reset}`);
+        } catch (err) {
+          console.error(`${colors.red}Error granting privileges: ${err.message}${colors.reset}`);
+          console.log(`${colors.yellow}Continuing anyway, this might not be critical...${colors.reset}`);
+        }
       }
     }
     
