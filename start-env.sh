@@ -39,5 +39,12 @@ if [ -d "dist/client" ] && [ -f "dist/index.js" ]; then
   NODE_ENV=production node -r dotenv/config dist/index.js
 else
   echo "Development mode. Starting development server..."
+  
+  # Check if tsx is installed
+  if ! command -v tsx &> /dev/null && ! npx --no-install tsx --version &> /dev/null; then
+    echo "tsx not found, installing it..."
+    npm install --no-save tsx
+  fi
+  
   NODE_ENV=development npx tsx -r dotenv/config server/index.ts
 fi

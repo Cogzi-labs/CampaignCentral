@@ -64,11 +64,25 @@ if [ "$NODE_ENV" = "production" ]; then
       echo "- Missing dependencies (vite, esbuild)"
       echo "- TypeScript errors"
       echo "Attempting to run in development mode..."
-      NODE_ENV=production tsx server/index.ts
+      
+      # Check if tsx is installed
+      if ! command -v tsx &> /dev/null && ! npx --no-install tsx --version &> /dev/null; then
+        echo "tsx not found, installing it..."
+        npm install --no-save tsx
+      fi
+      
+      NODE_ENV=production npx tsx server/index.ts
     fi
   fi
 else
   # Development mode
   echo "Starting in DEVELOPMENT mode"
-  NODE_ENV=development tsx server/index.ts
+  
+  # Check if tsx is installed
+  if ! command -v tsx &> /dev/null && ! npx --no-install tsx --version &> /dev/null; then
+    echo "tsx not found, installing it..."
+    npm install --no-save tsx
+  fi
+  
+  NODE_ENV=development npx tsx server/index.ts
 fi
