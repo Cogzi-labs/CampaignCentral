@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * create_database.js
+ * create_database.cjs
  * A specialized script to create a PostgreSQL database (cannot be done inside transactions)
  */
 
@@ -10,7 +10,7 @@ const { Client } = require('pg');
 // Parse command line arguments
 const args = process.argv.slice(2);
 if (args.length < 5) {
-  console.error('Usage: node create_database.js <superuser> <password> <host> <port> <dbname> <owner>');
+  console.error('Usage: node create_database.cjs <superuser> <password> <host> <port> <dbname> <owner>');
   process.exit(1);
 }
 

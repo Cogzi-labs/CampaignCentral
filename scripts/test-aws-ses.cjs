@@ -1,6 +1,7 @@
+#!/usr/bin/env node
 // Simple script to test AWS SES credentials
-import AWS from 'aws-sdk';
-import dotenv from 'dotenv';
+const AWS = require('aws-sdk');
+const dotenv = require('dotenv');
 
 // Load environment variables
 dotenv.config();

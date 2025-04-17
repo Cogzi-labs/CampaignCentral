@@ -1,8 +1,9 @@
+#!/usr/bin/env node
 // Comprehensive AWS SES credential verification script
-import AWS from 'aws-sdk';
-import dotenv from 'dotenv';
-import { promisify } from 'util';
-import { exec as execCallback } from 'child_process';
+const AWS = require('aws-sdk');
+const dotenv = require('dotenv');
+const { promisify } = require('util');
+const { exec: execCallback } = require('child_process');
 
 // Promisify exec
 const exec = promisify(execCallback);
