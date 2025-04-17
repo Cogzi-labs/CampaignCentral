@@ -42,6 +42,12 @@ if [ -z "$SESSION_SECRET" ]; then
   echo "Generated random SESSION_SECRET for this session."
 fi
 
+# Fix the ubuntu path issue by creating symbolic links if needed
+echo "Setting up symbolic links for path compatibility..."
+mkdir -p ~/ubuntu
+ln -sf "$(pwd)/client" ~/ubuntu/
+echo "Created compatibility path links."
+
 # Check if we should run production or development mode
 if [ -d "dist/client" ] && [ -f "dist/index.js" ]; then
   # Production mode
