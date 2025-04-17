@@ -84,5 +84,6 @@ else
     npm install --no-save tsx
   fi
   
-  NODE_ENV=development npx tsx server/index.ts
+  # Use direct path to ensure no path resolution issues
+  NODE_ENV=development npx --no tsx -- "./server/index.ts"
 fi
