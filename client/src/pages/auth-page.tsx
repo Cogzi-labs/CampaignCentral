@@ -52,6 +52,7 @@ export default function AuthPage() {
   });
 
   const onLoginSubmit = (values: z.infer<typeof loginSchema>) => {
+    console.log('Submitting login with:', values.username);
     loginMutation.mutate(values);
   };
 

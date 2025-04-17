@@ -49,37 +49,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast(); 
   const [location, navigate] = useLocation();
 
-  // Custom query function to handle the new response format
+  // Enhanced custom query function with detailed debugging 
   const authQueryFn = useCallback(async ({ queryKey }: { queryKey: string[] }) => {
+    console.log('Checking user authentication status...');
     try {
       const timestamp = new Date().getTime();
       const url = `${queryKey[0]}?_t=${timestamp}`;
       
+      console.log('Fetching user data from:', url);
       const res = await fetch(url, {
         credentials: "include",
         headers: {
           "Accept": "application/json",
-          "Cache-Control": "no-cache, no-store, must-revalidate"
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache" 
         },
         cache: "no-cache"
       });
       
+      console.log('Auth check response status:', res.status);
+      
       if (res.status === 401) {
+        console.log('User not authenticated (401)');
         // Return null for unauthorized to prevent loops
         return null;
       }
       
       if (!res.ok) {
-        throw new Error(`Auth error: ${res.status} ${res.statusText}`);
+        const errorMessage = `Auth error: ${res.status} ${res.statusText}`;
+        console.error(errorMessage);
+        throw new Error(errorMessage);
       }
       
       const data: AuthResponse = await res.json();
+      console.log('Auth check response data:', data);
       
       // Check if we got the new response format or the old format
       if (data.hasOwnProperty('authenticated')) {
-        return data.authenticated && data.user ? data.user : null;
+        const isAuthenticated = data.authenticated && data.user;
+        console.log('Authentication status:', isAuthenticated ? 'Authenticated' : 'Not authenticated');
+        return isAuthenticated ? data.user : null;
       } else {
         // Handle the old format which directly returns the user
+        console.log('Using legacy authentication format, user data received');
         return data as unknown as SelectUser;
       }
     } catch (error) {
@@ -118,26 +130,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, isLoading, location, navigate]);
 
-  // Login mutation
+  // Login mutation with enhanced debugging
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
+      console.log('Login attempt for:', credentials.username);
+      try {
+        const res = await apiRequest("POST", "/api/login", credentials);
+        console.log('Login API response status:', res.status);
+        const data = await res.json();
+        console.log('Login successful, received user data:', data);
+        return data;
+      } catch (error) {
+        console.error('Login API error:', error);
+        throw error;
+      }
     },
     onSuccess: (userData: SelectUser) => {
+      console.log('Login mutation success handler with user:', userData);
+      
       // Immediately update query cache
       queryClient.setQueryData(["/api/user"], userData);
       
       // Force a refetch to confirm session is established
-      setTimeout(() => {
-        refetchUser();
-        // Also force refetch of any dependent resources
-        queryClient.invalidateQueries({queryKey: ["/api/campaigns"]});
-        queryClient.invalidateQueries({queryKey: ["/api/contacts"]});
-        queryClient.invalidateQueries({queryKey: ["/api/analytics"]});
-      }, 100);
+      setTimeout(async () => {
+        console.log('Running delayed verification of session...');
+        try {
+          const result = await refetchUser();
+          console.log('Session verification result:', result.data ? 'Session valid' : 'Session invalid');
+          
+          // Also force refetch of any dependent resources
+          queryClient.invalidateQueries({queryKey: ["/api/campaigns"]});
+          queryClient.invalidateQueries({queryKey: ["/api/contacts"]});
+          queryClient.invalidateQueries({queryKey: ["/api/analytics"]});
+        } catch (error) {
+          console.error('Session verification error:', error);
+        }
+      }, 500);
       
       // Navigate and show toast
+      console.log('Navigating to dashboard after login');
       navigate("/");
       toast({
         title: "Login successful",
@@ -145,6 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      console.error('Login mutation error handler:', error);
       toast({
         title: "Login failed",
         description: error.message || "Please check your credentials and try again",

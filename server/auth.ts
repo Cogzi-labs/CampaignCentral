@@ -178,13 +178,16 @@ export function setupAuth(app: Express): void {
   });
 
   /**
-   * User login endpoint
+   * User login endpoint with enhanced debugging
    */
   app.post("/api/login", (req: Request, res: Response, next: NextFunction) => {
     // Validate request
     if (!req.body.username || !req.body.password) {
+      console.log("Login attempt with missing credentials");
       return res.status(400).json({ message: "Username and password are required" });
     }
+    
+    console.log(`Login attempt for username: ${req.body.username}`);
     
     // Authenticate using passport
     passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
@@ -194,35 +197,40 @@ export function setupAuth(app: Express): void {
       }
       
       if (!user) {
+        console.log(`Authentication failed for ${req.body.username}: ${info?.message || "Invalid credentials"}`);
         return res.status(401).json({ 
           message: info?.message || "Invalid username or password" 
         });
       }
       
+      console.log(`Authentication successful for user ${user.username} (ID: ${user.id})`);
+      
       // Log user in
       req.login(user, (err) => {
         if (err) {
+          console.error("Error in req.login:", err);
           return next(err);
         }
         
-        // Explicitly save session with regenerated ID
-        req.session.regenerate((err) => {
+        // Don't regenerate session to prevent losing session
+        // Instead, just save the current session
+        req.session.save((err) => {
           if (err) {
+            console.error("Error saving session:", err);
             return next(err);
           }
           
-          // Save session again with the user
-          req.session.save((err) => {
-            if (err) {
-              return next(err);
-            }
-            
-            console.log("Login successful - User ID:", user.id, "Session ID:", req.sessionID);
-            
-            // Return user without password
-            const { password, ...userWithoutPassword } = user;
-            res.status(200).json(userWithoutPassword);
+          console.log("Login successful - User ID:", user.id, "Session ID:", req.sessionID);
+          console.log("Session cookie details:", {
+            name: SESSION_CONFIG.cookie.sameSite,
+            secure: SESSION_CONFIG.cookie.secure,
+            sameSite: SESSION_CONFIG.cookie.sameSite,
+            path: SESSION_CONFIG.cookie.path
           });
+          
+          // Return user without password
+          const { password, ...userWithoutPassword } = user;
+          res.status(200).json(userWithoutPassword);
         });
       });
     })(req, res, next);
@@ -260,9 +268,17 @@ export function setupAuth(app: Express): void {
   });
 
   /**
-   * Get current user endpoint
+   * Get current user endpoint with enhanced debugging
    */
   app.get("/api/user", (req: Request, res: Response) => {
+    // Log request headers for debugging
+    console.log("GET /api/user - Headers:", {
+      cookie: req.headers.cookie ? 'Present' : 'Not present',
+      sessionID: req.sessionID,
+      hasSession: !!req.session,
+      authenticated: req.isAuthenticated()
+    });
+    
     // Not authenticated
     if (!req.isAuthenticated() || !req.user) {
       console.log("User not authenticated. Session ID:", req.sessionID);
@@ -275,9 +291,17 @@ export function setupAuth(app: Express): void {
     // Authenticated - return user without password
     console.log("User authenticated. User ID:", req.user.id, "Session ID:", req.sessionID);
     const { password, ...userWithoutPassword } = req.user;
-    res.status(200).json({
-      authenticated: true,
-      user: userWithoutPassword
+    
+    // Save session to refresh expiry
+    req.session.save((err) => {
+      if (err) {
+        console.error("Error refreshing session:", err);
+      }
+      
+      res.status(200).json({
+        authenticated: true,
+        user: userWithoutPassword
+      });
     });
   });
 }
