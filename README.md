@@ -2,6 +2,8 @@
 
 A full-stack campaign management system with contact organization, de-duplication, and campaign launch capabilities.
 
+> **Note:** For detailed information about starting the application, environment configuration, and troubleshooting, see [STARTUP.md](STARTUP.md).
+
 ## Features
 
 - **User Authentication**: Secure login and registration
@@ -142,45 +144,29 @@ npm run build
 
 ##### For Linux/Mac:
 ```bash
-# RECOMMENDED FOR PRODUCTION: Use our custom production runner (avoids all Vite config issues)
-./run-prod.sh
+# RECOMMENDED: Simple, unified startup script with environment checks
+./start.sh
 
-# RECOMMENDED FOR ENVIRONMENT VARIABLES ISSUES: Explicitly loads .env variables
-./start-env.sh
+# Production-optimized startup script
+./start-prod.sh
 
-# Alternative methods:
-# Simple start script with minimal complexity
+# Minimal dependency script for limited environments
 ./simple-start.sh 
 
 # Using npm start (may have issues with Vite config)
 npm start
-
-# Using the standalone build script (if you want to build without starting)
-./build.sh
-
-# Other options available (see Troubleshooting section):
-# ./start-prod.sh
-# ./start.sh
-# node start.js
 ```
 
 ##### For Windows:
 ```cmd
-# RECOMMENDED FOR PRODUCTION: Build and run in one step
-run-prod-windows.bat
-
-# Environment variable loading with detailed debugging
+# RECOMMENDED: Windows-compatible startup script
 start-windows.bat
-
-# For PowerShell users (better environment variable handling)
-.\start-windows.ps1
-
-# Build only (if you want to build without starting)
-build-windows.bat
 
 # Using npm (may have issues with Vite config)
 npm start
 ```
+
+For detailed information about startup options, environment variables, and troubleshooting, see the `STARTUP.md` file.
 
 #### 9. Access the application
 Open your browser and navigate to:

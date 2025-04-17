@@ -35,13 +35,17 @@ The application requires certain environment variables to function properly. The
 ### Required Environment Variables
 
 1. **Database Configuration**:
-   - `DATABASE_URL`: The PostgreSQL connection string
+   - `DATABASE_URL`: The PostgreSQL connection string in the format `postgresql://username:password@hostname:port/database`
    - Alternatively, you can set individual variables:
      - `PGHOST`: PostgreSQL host
      - `PGUSER`: PostgreSQL username
      - `PGPASSWORD`: PostgreSQL password
      - `PGDATABASE`: PostgreSQL database name
      - `PGPORT`: PostgreSQL port (defaults to 5432)
+   
+   Note: The application will automatically construct the DATABASE_URL from
+   individual PostgreSQL environment variables if they are available but
+   DATABASE_URL is not set.
 
 2. **Email Configuration (AWS SES)**:
    - `SES_AUTH`: Authentication type (default: "login")
@@ -95,3 +99,9 @@ Then run the start script, which will detect the build and run in production mod
    - Verify your AWS SES credentials
    - Ensure the sender email is verified in AWS SES
    - Check for SES sending limits in your AWS account
+
+4. **Vite Configuration Issues**:
+   - If you encounter issues with `import.meta.dirname` in the Vite configuration:
+     - You can use the alternative configuration in `vite.config.alternative.ts`
+     - To use it: `cp vite.config.alternative.ts vite.config.ts`
+     - This alternative uses `fileURLToPath` which is more compatible across Node.js versions
