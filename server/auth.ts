@@ -46,7 +46,7 @@ const generateStrongSecret = (): string => {
  * Set up authentication for the application
  */
 export function setupAuth(app: Express): void {
-  // Configure session with production-ready settings
+  // Configure session with enhanced settings for persistence
   const sessionSettings: session.SessionOptions = {
     name: 'campaign_session',
     secret: SESSION_CONFIG.secret,
@@ -54,14 +54,20 @@ export function setupAuth(app: Express): void {
     saveUninitialized: false,
     store: storage.sessionStore,
     rolling: true, // Reset expiration on every response
+    proxy: true, // Trust proxy settings when behind a reverse proxy
     cookie: {
       maxAge: SESSION_CONFIG.cookie.maxAge,
       httpOnly: true, // Prevent JavaScript access
-      sameSite: SESSION_CONFIG.cookie.sameSite,
-      secure: SESSION_CONFIG.cookie.secure,
-      path: '/'
+      sameSite: 'lax', // More compatible setting for testing
+      secure: process.env.NODE_ENV === 'production', // Only secure in production
+      path: '/',
+      domain: undefined // Let browser determine domain
     }
   };
+  
+  // Log session configuration for debugging
+  console.log(`Session configuration: secret=${SESSION_CONFIG.secret.substring(0, 3)}..., cookie.secure=${SESSION_CONFIG.cookie.secure}, cookie.sameSite=${SESSION_CONFIG.cookie.sameSite}`);
+  console.log(`Using ${process.env.DATABASE_URL ? 'PostgreSQL' : 'Memory'} session store`);
 
   // Session handling middleware
   app.use(session(sessionSettings));

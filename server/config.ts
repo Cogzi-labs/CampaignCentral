@@ -73,8 +73,12 @@ export const SESSION_CONFIG = {
   cookie: {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const
-  }
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
+    domain: undefined, // Let browser set this automatically
+    path: '/'
+  },
+  // Debug mode for session issues
+  debug: process.env.NODE_ENV !== 'production'
 };
 
 // API keys
