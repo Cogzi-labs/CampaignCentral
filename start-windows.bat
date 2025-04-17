@@ -1,21 +1,13 @@
 @echo off
-echo === CampaignHub Startup (Windows) ===
+REM Simple startup script for CampaignHub (Windows development)
 
-:: Check if we have a production build
-if exist "dist\index.js" if exist "dist\client" (
-  echo Production build found. Running in PRODUCTION mode...
+REM Check if we should run production or development mode
+if exist "dist\client" if exist "dist\index.js" (
+  REM Production mode
   set NODE_ENV=production
   node dist\index.js
 ) else (
-  echo No production build found. Running in DEVELOPMENT mode...
-  
-  :: Install dependencies if needed
-  echo Installing dependencies...
-  call npm install --no-save tsx
-  
-  :: Run in development mode
-  echo Starting in development mode...
+  REM Development mode
   set NODE_ENV=development
-  set NODE_OPTIONS=--no-warnings
   npx tsx server\index.ts
 )
