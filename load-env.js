@@ -17,23 +17,43 @@ function loadEnv() {
   // Use current working directory by default
   const cwd = process.cwd();
   
-  // Find .env file in the current directory
-  const envPath = path.resolve(cwd, '.env');
+  // Try to find .env file in the current directory and parent directories
+  let envPath = '';
   
-  if (!fs.existsSync(envPath)) {
-    console.warn('Warning: .env file not found at:', envPath);
+  // First try the current directory
+  const currentDirEnvPath = path.resolve(cwd, '.env');
+  if (fs.existsSync(currentDirEnvPath)) {
+    envPath = currentDirEnvPath;
+  } else {
+    // Try parent directory as fallback
+    const parentDirEnvPath = path.resolve(cwd, '..', '.env');
+    if (fs.existsSync(parentDirEnvPath)) {
+      envPath = parentDirEnvPath;
+    }
+  }
+  
+  if (!envPath) {
+    console.warn('Warning: .env file not found in current or parent directories');
     return;
   }
   
   try {
     // Read and parse the .env file
-    const envContent = fs.readFileSync(envPath, 'utf8');
-    const envLines = envContent.split('\n');
+    let envContent;
+    try {
+      envContent = fs.readFileSync(envPath, 'utf8');
+    } catch (readError) {
+      console.error(`Error reading .env file at ${envPath}:`, readError.message);
+      return;
+    }
+    
+    // Use both \n and \r\n as possible line endings
+    const envLines = envContent.replace(/\r\n/g, '\n').split('\n');
     
     let varsLoaded = 0;
     
     // Process each line
-    envLines.forEach(line => {
+    envLines.forEach((line, lineNumber) => {
       // Skip comments and empty lines
       if (line.startsWith('#') || !line.trim()) {
         return;
@@ -45,22 +65,29 @@ function loadEnv() {
         const key = line.substring(0, equalsPos).trim();
         const value = line.substring(equalsPos + 1).trim();
         
+        if (!key) {
+          console.warn(`Warning: Line ${lineNumber + 1} has an empty key, skipping`);
+          return;
+        }
+        
         // Set the environment variable
         process.env[key] = value;
         varsLoaded++;
+      } else {
+        console.warn(`Warning: Line ${lineNumber + 1} is not properly formatted (missing "="), skipping: ${line}`);
       }
     });
     
     console.log(`Environment variables loaded: ${varsLoaded} variables from ${envPath}`);
     
-    // Check for DATABASE_URL
+    // Check for important environment variables
     if (process.env.DATABASE_URL) {
       console.log('Database connection string found');
     } else {
       console.warn('Warning: DATABASE_URL not found in .env file');
     }
   } catch (error) {
-    console.error('Error loading .env file:', error.message);
+    console.error('Error processing .env file:', error.message);
   }
 }
 
