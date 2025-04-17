@@ -46,22 +46,21 @@ const generateStrongSecret = (): string => {
  * Set up authentication for the application
  */
 export function setupAuth(app: Express): void {
-  // Configure session with enhanced settings for persistence
+  // Configure session with maximally compatible settings
   const sessionSettings: session.SessionOptions = {
     name: 'campaign_session',
     secret: SESSION_CONFIG.secret,
-    resave: false,
-    saveUninitialized: false,
+    resave: true, // Changed to true to ensure session is saved
+    saveUninitialized: true, // Changed to true to ensure new sessions are saved
     store: storage.sessionStore,
     rolling: true, // Reset expiration on every response
     proxy: true, // Trust proxy settings when behind a reverse proxy
     cookie: {
       maxAge: SESSION_CONFIG.cookie.maxAge,
       httpOnly: true, // Prevent JavaScript access
-      sameSite: 'lax', // More compatible setting for testing
-      secure: process.env.NODE_ENV === 'production', // Only secure in production
-      path: '/',
-      domain: undefined // Let browser determine domain
+      sameSite: 'lax', // Most compatible setting for cross-domain
+      secure: false, // Disable secure for all environments during troubleshooting
+      path: '/'
     }
   };
   

@@ -82,16 +82,29 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    // Enhanced session store configuration
-    this.sessionStore = new PostgresStore({ 
-      pool,
-      createTableIfMissing: true,
-      tableName: 'session', // Default table name
-      schemaName: 'public', // Default schema
-      pruneSessionInterval: 60 * 15 // Prune expired sessions every 15 minutes
-    });
-    
-    console.log('PostgreSQL session store initialized');
+    try {
+      // Log database connection info
+      console.log('Initializing PostgreSQL session store');
+      
+      // Enhanced session store configuration - skip table creation since it already exists
+      this.sessionStore = new PostgresStore({ 
+        pool,
+        createTableIfMissing: false, // Changed to false to avoid the "relation already exists" error
+        tableName: 'session', // Match the existing table name
+        schemaName: 'public', 
+        pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
+        errorLog: (error) => console.error('PostgreSQL session store error:', error)
+      });
+      
+      console.log('PostgreSQL session store successfully initialized');
+    } catch (error) {
+      console.error('CRITICAL ERROR initializing PostgreSQL session store:', error);
+      // Fallback to memory store in case of database connection issues
+      console.warn('Falling back to memory session store (sessions will not persist)');
+      this.sessionStore = new MemoryStore({
+        checkPeriod: 86400000 // Prune expired entries every day
+      });
+    }
   }
 
   // USER METHODS
