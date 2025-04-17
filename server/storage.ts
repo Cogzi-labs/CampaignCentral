@@ -12,6 +12,7 @@ import { db } from "./db";
 import { eq, and, like, gte, or, desc } from "drizzle-orm";
 import { pool } from "./db";
 import crypto from 'crypto';
+import { DB_CONFIG } from './config';
 
 // Define the SessionStore type to handle type errors
 declare module "express-session" {
@@ -981,7 +982,8 @@ export class MemStorage implements IStorage {
       wabaApiUrl: settingsData.wabaApiUrl || null,
       facebookAccessToken: settingsData.facebookAccessToken || null,
       partnerMobile: settingsData.partnerMobile || null,
-      wabaId: settingsData.wabaId || null
+      wabaId: settingsData.wabaId || null,
+      campaignApiKey: settingsData.campaignApiKey || null
     };
     this.settingsData.set(id, settings);
     return settings;
@@ -989,6 +991,6 @@ export class MemStorage implements IStorage {
 }
 
 // Use database storage if DATABASE_URL is provided, otherwise use in-memory storage
-export const storage = process.env.DATABASE_URL 
+export const storage = DB_CONFIG.url 
   ? new DatabaseStorage() 
   : new MemStorage();
