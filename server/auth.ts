@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser, insertUserSchema } from "@shared/schema";
+import { SESSION_CONFIG } from "./config";
 
 // Global declaration for TypeScript passport integration
 declare global {
@@ -45,22 +46,19 @@ const generateStrongSecret = (): string => {
  * Set up authentication for the application
  */
 export function setupAuth(app: Express): void {
-  // Use environment variable or generate a strong secret
-  const sessionSecret = process.env.SESSION_SECRET || generateStrongSecret();
-  
   // Configure session with production-ready settings
   const sessionSettings: session.SessionOptions = {
     name: 'campaign_session',
-    secret: sessionSecret,
+    secret: SESSION_CONFIG.secret,
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
     rolling: true, // Reset expiration on every response
     cookie: {
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours 
+      maxAge: SESSION_CONFIG.cookie.maxAge,
       httpOnly: true, // Prevent JavaScript access
-      sameSite: 'lax', // CSRF protection with reasonable UX
-      secure: process.env.NODE_ENV === 'production', // Secure in production only
+      sameSite: SESSION_CONFIG.cookie.sameSite,
+      secure: SESSION_CONFIG.cookie.secure,
       path: '/'
     }
   };

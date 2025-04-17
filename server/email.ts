@@ -1,15 +1,12 @@
 import AWS from 'aws-sdk';
 import { log } from './vite';
-import dotenv from 'dotenv';
+import { EMAIL_CONFIG } from './config';
 
-// Ensure environment variables are loaded
-dotenv.config();
-
-// Get credentials directly from environment
-const SES_USERNAME = process.env.SES_USERNAME || '';
-const SES_PASSWORD = process.env.SES_PASSWORD || '';
-const SES_SENDER = process.env.SES_SENDER || 'contact@ce.cogzi.io'; // Use environment or default
-const SES_REGION = process.env.SES_REGION || 'ap-south-1'; // Default to ap-south-1 if not provided
+// Get credentials from configuration
+const SES_USERNAME = EMAIL_CONFIG.username || '';
+const SES_PASSWORD = EMAIL_CONFIG.password || '';
+const SES_SENDER = EMAIL_CONFIG.sender || 'contact@ce.cogzi.io'; // Use environment or default
+const SES_REGION = EMAIL_CONFIG.region || 'ap-south-1'; // Default to ap-south-1 if not provided
 
 // Set the AWS SDK configuration globally to ensure consistent credentials
 AWS.config.update({

@@ -2,15 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import cors from "cors";
-import dotenv from "dotenv";
-
-// Load environment variables from .env file
-dotenv.config();
-
-// Debug environment variables
-console.log("ENV DEBUG: SES_USERNAME =", process.env.SES_USERNAME);
-console.log("ENV DEBUG: SES_PASSWORD exists =", !!process.env.SES_PASSWORD);
-console.log("ENV DEBUG: SES_SENDER =", process.env.SES_SENDER);
+import { SERVER_CONFIG } from "./config";
 
 const app = express();
 
@@ -87,15 +79,12 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
+  // Server configuration
   server.listen({
-    port,
-    host: "0.0.0.0",
+    port: SERVER_CONFIG.port,
+    host: SERVER_CONFIG.host,
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    log(`serving on port ${SERVER_CONFIG.port}`);
   });
 })();
