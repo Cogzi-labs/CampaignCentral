@@ -142,17 +142,22 @@ npm run build
 
 ##### For Linux/Mac:
 ```bash
-# Make sure the script is executable
+# Standard startup
 chmod +x start.sh
-
-# Run the application
 ./start.sh
+
+# If you encounter path resolution errors, use the patched script:
+chmod +x fixed-start.sh
+./fixed-start.sh
 ```
 
 ##### For Windows:
 ```cmd
-# Run the application
+# Standard startup
 start-windows.bat
+
+# If you encounter path resolution errors, use the patched script:
+fixed-start-windows.bat
 ```
 
 The startup scripts will automatically:
@@ -160,6 +165,9 @@ The startup scripts will automatically:
 - Construct DATABASE_URL from PostgreSQL variables if needed
 - Generate a SESSION_SECRET if not provided
 - Detect whether to run in production or development mode
+
+##### Path Resolution Fix
+If you encounter errors like: `TypeError [ERR_INVALID_ARG_TYPE]: The "paths[0]" argument must be of type string. Received undefined`, use the patched startup scripts which implement Node.js runtime fixes without modifying sensitive files.
 
 #### 9. Access the application
 Open your browser and navigate to:

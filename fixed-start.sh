@@ -46,9 +46,9 @@ fi
 if [ -d "dist/client" ] && [ -f "dist/index.js" ]; then
   # Production mode
   echo "Starting in PRODUCTION mode with path resolution patch..."
-  NODE_ENV=production node -r ./vite-runtime-patch.js dist/index.js
+  NODE_ENV=production node -r ./vite-runtime-patch.cjs dist/index.js
 else
   # Development mode with runtime patch
   echo "Starting in DEVELOPMENT mode with path resolution patch..."
-  NODE_ENV=development NODE_OPTIONS="--require ./vite-runtime-patch.js" npx tsx server/index.ts
+  NODE_ENV=development NODE_OPTIONS="--require ./vite-runtime-patch.cjs" npx tsx server/index.ts
 fi

@@ -43,10 +43,10 @@ REM Check if we should run production or development mode
 if exist "dist\client" if exist "dist\index.js" (
   echo Starting in PRODUCTION mode with path resolution patch...
   set NODE_ENV=production
-  node -r ./vite-runtime-patch.js dist\index.js
+  node -r ./vite-runtime-patch.cjs dist\index.js
 ) else (
   echo Starting in DEVELOPMENT mode with path resolution patch...
   set NODE_ENV=development
-  set NODE_OPTIONS=--require ./vite-runtime-patch.js
+  set NODE_OPTIONS=--require ./vite-runtime-patch.cjs
   npx tsx server\index.ts
 )
