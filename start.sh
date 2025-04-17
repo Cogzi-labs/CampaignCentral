@@ -78,12 +78,12 @@ else
   # Development mode
   echo "Starting in DEVELOPMENT mode"
   
-  # Check if tsx is installed
-  if ! command -v tsx &> /dev/null && ! npx --no-install tsx --version &> /dev/null; then
-    echo "tsx not found, installing it..."
+  # Install tsx locally if needed and call it directly through node_modules
+  if [ ! -f "node_modules/.bin/tsx" ]; then
+    echo "tsx not found, installing it locally..."
     npm install --no-save tsx
   fi
   
-  # Use direct path to ensure no path resolution issues
-  NODE_ENV=development npx --no tsx -- "./server/index.ts"
+  # Run using explicit path to tsx in node_modules (much more reliable)
+  NODE_ENV=development ./node_modules/.bin/tsx server/index.ts
 fi

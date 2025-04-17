@@ -40,12 +40,18 @@ if [ -d "dist/client" ] && [ -f "dist/index.js" ]; then
 else
   echo "Development mode. Starting development server..."
   
-  # Check if tsx is installed
-  if ! command -v tsx &> /dev/null && ! npx --no-install tsx --version &> /dev/null; then
-    echo "tsx not found, installing it..."
+  # Install tsx locally if needed and call it directly through node_modules
+  if [ ! -f "node_modules/.bin/tsx" ]; then
+    echo "tsx not found, installing it locally..."
     npm install --no-save tsx
   fi
   
-  # Use direct path to ensure no path resolution issues
-  NODE_ENV=development npx --no tsx -- -r dotenv/config "./server/index.ts"
+  # Install dotenv if needed
+  if [ ! -f "node_modules/.bin/dotenv" ]; then
+    echo "dotenv not found, installing it locally..."
+    npm install --no-save dotenv
+  fi
+  
+  # Run using explicit path to tsx in node_modules (much more reliable)
+  NODE_ENV=development ./node_modules/.bin/tsx -r dotenv/config server/index.ts
 fi
