@@ -52,7 +52,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo -e "\n${YELLOW}Step 2/3: Creating tables${NC}"
+echo -e "\n${YELLOW}Step 2/4: Creating tables${NC}"
 PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d $DB_NAME -f create_tables.sql
 
 if [ $? -ne 0 ]; then
@@ -60,7 +60,15 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo -e "\n${YELLOW}Step 3/3: Adding seed data${NC}"
+echo -e "\n${YELLOW}Step 3/4: Creating session table${NC}"
+PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d $DB_NAME -f create_session_table.sql
+
+if [ $? -ne 0 ]; then
+  echo -e "${YELLOW}Warning: Session table creation failed, but continuing.${NC}"
+  echo -e "${YELLOW}If this is because the table already exists, you can ignore this warning.${NC}"
+fi
+
+echo -e "\n${YELLOW}Step 4/4: Adding seed data${NC}"
 PGPASSWORD=$DB_PASSWORD psql -U $DB_USER -d $DB_NAME -f seed_data.sql
 
 if [ $? -ne 0 ]; then
