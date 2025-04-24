@@ -7,6 +7,7 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser, insertUserSchema } from "@shared/schema";
 import { SESSION_CONFIG, DB_CONFIG } from "./config";
+import { Pool } from 'pg';
 
 // Global declaration for TypeScript passport integration
 declare global {
@@ -193,6 +194,54 @@ export function setupAuth(app: Express): void {
     
     console.log(`Login attempt for username: ${req.body.username}`);
     
+    // Check if the user is already logged in
+    if (req.isAuthenticated() && req.user?.username === req.body.username) {
+      console.log(`User ${req.body.username} is already logged in (Session ID: ${req.sessionID})`);
+      const { password, ...userWithoutPassword } = req.user;
+      return res.status(200).json(userWithoutPassword);
+    }
+    
+    // Function to handle session cleanup for previous user sessions
+    const cleanupPreviousSessions = async (userId: number): Promise<void> => {
+      try {
+        // Find all sessions in the database
+        const pool = DB_CONFIG.url ? new Pool({ connectionString: DB_CONFIG.url }) 
+          : new Pool({
+            host: DB_CONFIG.host,
+            port: parseInt(DB_CONFIG.port, 10),
+            user: DB_CONFIG.user,
+            password: DB_CONFIG.password,
+            database: DB_CONFIG.database,
+            ssl: { rejectUnauthorized: false }
+          });
+        
+        // Check for existing sessions for this user
+        // This is a simplified query - actual session format might vary
+        const existingSessions = await pool.query(`
+          SELECT sid FROM "session" 
+          WHERE sess->'passport'->>'user' = $1 
+            AND sid != $2
+        `, [userId.toString(), req.sessionID]);
+        
+        // Delete old sessions for this user
+        if (existingSessions.rows.length > 0) {
+          const oldSessionIds = existingSessions.rows.map(row => row.sid);
+          console.log(`Found ${oldSessionIds.length} previous sessions for user ID ${userId}, cleaning up...`);
+          
+          await pool.query(`
+            DELETE FROM "session" WHERE sid = ANY($1::varchar[])
+          `, [oldSessionIds]);
+          
+          console.log(`Cleaned up ${oldSessionIds.length} previous sessions for user ID ${userId}`);
+        }
+        
+        await pool.end();
+      } catch (error) {
+        console.error("Error during session cleanup:", error);
+        // Don't throw - this is just cleanup
+      }
+    };
+    
     // Authenticate using passport
     passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
       if (err) {
@@ -216,26 +265,44 @@ export function setupAuth(app: Express): void {
           return next(err);
         }
         
-        // Don't regenerate session to prevent losing session
-        // Instead, just save the current session
-        req.session.save((err) => {
+        // Regenerate session for security and to clean up
+        req.session.regenerate((err) => {
           if (err) {
-            console.error("Error saving session:", err);
+            console.error("Error regenerating session:", err);
             return next(err);
           }
           
-          console.log("Login successful - User ID:", user.id, "Session ID:", req.sessionID);
-          console.log("Session cookie details:", {
-            name: 'campaign_session', // Fixed incorrect property
-            secure: SESSION_CONFIG.cookie.secure,
-            sameSite: SESSION_CONFIG.cookie.sameSite,
-            path: SESSION_CONFIG.cookie.path,
-            domain: SESSION_CONFIG.cookie.domain || 'not set'
+          // Re-login after session regeneration
+          req.login(user, (err) => {
+            if (err) {
+              console.error("Error in re-login after session regeneration:", err);
+              return next(err);
+            }
+            
+            // Save the new session
+            req.session.save(async (err) => {
+              if (err) {
+                console.error("Error saving session:", err);
+                return next(err);
+              }
+              
+              console.log("Login successful - User ID:", user.id, "New Session ID:", req.sessionID);
+              console.log("Session cookie details:", {
+                name: 'campaign_session',
+                secure: SESSION_CONFIG.cookie.secure,
+                sameSite: SESSION_CONFIG.cookie.sameSite,
+                path: SESSION_CONFIG.cookie.path,
+                domain: SESSION_CONFIG.cookie.domain || 'not set'
+              });
+              
+              // Clean up any previous sessions for this user (async)
+              cleanupPreviousSessions(user.id).catch(console.error);
+              
+              // Return user without password
+              const { password, ...userWithoutPassword } = user;
+              res.status(200).json(userWithoutPassword);
+            });
           });
-          
-          // Return user without password
-          const { password, ...userWithoutPassword } = user;
-          res.status(200).json(userWithoutPassword);
         });
       });
     })(req, res, next);
