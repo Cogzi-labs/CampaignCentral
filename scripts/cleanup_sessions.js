@@ -10,9 +10,18 @@
  *   node scripts/cleanup_sessions.js
  */
 
-const { Pool } = require('pg');
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+import { Pool } from 'pg';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+import { dirname } from 'path';
+
+// Get directory name from ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 // Get database connection info from environment variables
 const connectionConfig = process.env.DATABASE_URL 
@@ -79,12 +88,13 @@ async function cleanupSessions() {
     // This is a more advanced cleanup that helps when there are multiple sessions for the same user
     console.log('\nChecking for duplicate sessions...');
     const duplicatesResult = await pool.query(`
-      SELECT DISTINCT s1.sid, s1.sess->>'passport' as passport_data
+      SELECT s1.sid, s1.sess->>'passport' as passport_data
       FROM "session" s1
       JOIN "session" s2 ON 
         s1.sid != s2.sid AND 
         s1.sess->>'passport' = s2.sess->>'passport' AND
         s1.sess->>'passport' IS NOT NULL
+      GROUP BY s1.sid, s1.sess->>'passport', s1.expire
       ORDER BY s1.expire DESC;
     `);
     
