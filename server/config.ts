@@ -99,4 +99,6 @@ if (SERVER_CONFIG.environment === 'development') {
   console.log("ENV DEBUG: SES_PASSWORD exists =", !!EMAIL_CONFIG.password);
   console.log("ENV DEBUG: SES_SENDER =", EMAIL_CONFIG.sender);
   console.log("ENV DEBUG: INSTALL_DIR =", PATH_CONFIG.installDir);
+  
+  console.log("ENV DEBUG: DATABASE_URL =", DB_CONFIG.url);
 }
