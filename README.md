@@ -119,10 +119,27 @@ Make sure to change this password in production!
 ##### Option B: Using Drizzle ORM migrations
 If you prefer to use the Drizzle ORM migration system or already have a database set up:
 ```bash
-# Generate and run migrations based on your schema
-npx drizzle-kit generate
-npx drizzle-kit push
+# Run the simplified migration script (recommended)
+bash scripts/apply_migrations.sh
+
+# Or for Windows users:
+scripts\apply_migrations.bat
 ```
+
+The migration script will:
+1. Apply the Drizzle ORM migrations using `drizzle-kit push`
+2. Create the session table for persistent user sessions
+
+If you prefer to run the migrations manually:
+```bash
+# Run Drizzle migrations
+npx drizzle-kit push
+
+# Then create the session table with:
+node scripts/create_session_table.js
+```
+
+**Important**: The session table is required for user authentication sessions to persist across server restarts. Without it, users will be logged out whenever the server restarts.
 
 #### 6. Install build dependencies
 ```bash
