@@ -293,7 +293,13 @@ npm run dev
 │   └── schema.ts          # Database schema definitions
 ├── scripts/               # Database initialization and utility scripts
 │   ├── initialize_database.cjs  # Interactive database setup script
+│   ├── initialize_database.js   # Node.js version of database setup script
+│   ├── initialize_database.sh   # Bash version of database setup script
 │   ├── create_database.cjs      # Handles database creation outside transaction
+│   ├── create_session_table.js  # Creates session table for persistent sessions
+│   ├── create_session_table.sql # SQL definition for session table
+│   ├── apply_migrations.sh      # Bash script to apply all migrations including session table
+│   ├── apply_migrations.bat     # Windows batch script to apply all migrations
 │   ├── setup_db.sql       # Creates database user
 │   ├── grant_privileges.sql     # Grants database privileges
 │   ├── create_tables.sql  # Creates all tables and indexes
@@ -362,7 +368,14 @@ Account-specific settings, including API configuration
 - `facebook_access_token`: API token for Facebook
 - `partner_mobile`: Partner mobile number
 - `waba_id`: WhatsApp Business Account ID
+- `campaign_api_key`: API key for campaign launching
 - `updated_at`: Last update timestamp
+
+### session
+Stores persistent session data for authenticated users
+- `sid`: Primary key, session ID
+- `sess`: JSON object containing session data
+- `expire`: Expiration timestamp
 
 ## License
 [MIT](LICENSE)
