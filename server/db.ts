@@ -1,8 +1,9 @@
 import { DB_CONFIG } from './config';
-import { Pool } from 'pg';
+import  pkg from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
+const { Pool } = pkg;
 // Try to connect using individual parameters if available, otherwise fall back to connection string
 const connectionConfig = DB_CONFIG.host && DB_CONFIG.user && DB_CONFIG.password && DB_CONFIG.database
   ? {
