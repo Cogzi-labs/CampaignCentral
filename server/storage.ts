@@ -87,11 +87,11 @@ export class DatabaseStorage implements IStorage {
       // Log database connection info
       console.log('Initializing PostgreSQL session store');
       
-      // Enhanced session store configuration - skip table creation since it already exists
+      // Enhanced session store configuration
       this.sessionStore = new PostgresStore({ 
         pool,
-        createTableIfMissing: false, // Changed to false to avoid the "relation already exists" error
-        tableName: 'session', // Match the existing table name
+        createTableIfMissing: true, // Automatically create the session table if it doesn't exist
+        tableName: 'session', // Match the existing table name in our scripts
         schemaName: 'public', 
         pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
         errorLog: (error) => console.error('PostgreSQL session store error:', error)
