@@ -49,11 +49,11 @@ const generateStrongSecret = (): string => {
  * Set up authentication for the application
  */
 export function setupAuth(app: Express): void {
-  // Configure session with maximally compatible settings
+  // Configure session with optimized settings to prevent duplicate sessions
   const sessionSettings: session.SessionOptions = {
     name: 'campaign_session',
     secret: SESSION_CONFIG.secret,
-    resave: true, // Must be true to ensure session is saved after each request
+    resave: false, // Set to false to prevent unnecessary writes to the session store
     saveUninitialized: false, // Should be false to prevent anonymous sessions
     store: storage.sessionStore,
     rolling: true, // Reset expiration on every response
@@ -204,7 +204,7 @@ export function setupAuth(app: Express): void {
     }
     
     // Function to handle session cleanup for previous user sessions
-    const cleanupPreviousSessions = async (userId: number): Promise<void> => {
+    const cleanupPreviousSessions = async (userId: number, currentSessionId: string): Promise<void> => {
       try {
         // Find all sessions in the database
         const pool = DB_CONFIG.url ? new Pool({ connectionString: DB_CONFIG.url }) 
@@ -218,12 +218,12 @@ export function setupAuth(app: Express): void {
           });
         
         // Check for existing sessions for this user
-        // This is a simplified query - actual session format might vary
+        console.log(`Checking for previous sessions for user ID ${userId}...`);
         const existingSessions = await pool.query(`
           SELECT sid FROM "session" 
           WHERE sess->'passport'->>'user' = $1 
             AND sid != $2
-        `, [userId.toString(), req.sessionID]);
+        `, [userId.toString(), currentSessionId]);
         
         // Delete old sessions for this user
         if (existingSessions.rows.length > 0) {
@@ -235,6 +235,8 @@ export function setupAuth(app: Express): void {
           `, [oldSessionIds]);
           
           console.log(`Cleaned up ${oldSessionIds.length} previous sessions for user ID ${userId}`);
+        } else {
+          console.log(`No previous sessions found for user ID ${userId}`);
         }
         
         await pool.end();
@@ -242,6 +244,49 @@ export function setupAuth(app: Express): void {
         console.error("Error during session cleanup:", error);
         // Don't throw - this is just cleanup
       }
+    };
+    
+    // Function to handle the authentication and login process
+    const handleAuthentication = async (user: Express.User, req: Request, res: Response, next: NextFunction) => {
+      console.log(`Authentication successful for user ${user.username} (ID: ${user.id})`);
+      
+      // First clean up any previous sessions
+      await cleanupPreviousSessions(user.id, req.sessionID);
+      
+      // Create a new Promise to handle the login process
+      return new Promise<void>((resolve, reject) => {
+        // Log user in with a single session
+        req.login(user, (err) => {
+          if (err) {
+            console.error("Error in req.login:", err);
+            reject(err);
+            return next(err);
+          }
+          
+          // Save the session (single operation)
+          req.session.save((err) => {
+            if (err) {
+              console.error("Error saving session:", err);
+              reject(err);
+              return next(err);
+            }
+            
+            console.log("Login successful - User ID:", user.id, "Session ID:", req.sessionID);
+            console.log("Session cookie details:", {
+              name: 'campaign_session',
+              secure: SESSION_CONFIG.cookie.secure,
+              sameSite: SESSION_CONFIG.cookie.sameSite,
+              path: SESSION_CONFIG.cookie.path,
+              domain: SESSION_CONFIG.cookie.domain || 'not set'
+            });
+            
+            // Return user without password
+            const { password, ...userWithoutPassword } = user;
+            res.status(200).json(userWithoutPassword);
+            resolve();
+          });
+        });
+      });
     };
     
     // Authenticate using passport
@@ -258,54 +303,10 @@ export function setupAuth(app: Express): void {
         });
       }
       
-      console.log(`Authentication successful for user ${user.username} (ID: ${user.id})`);
-      
-      // Log user in
-      req.login(user, (err) => {
-        if (err) {
-          console.error("Error in req.login:", err);
-          return next(err);
-        }
-        
-        // Regenerate session for security and to clean up
-        req.session.regenerate((err) => {
-          if (err) {
-            console.error("Error regenerating session:", err);
-            return next(err);
-          }
-          
-          // Re-login after session regeneration
-          req.login(user, (err) => {
-            if (err) {
-              console.error("Error in re-login after session regeneration:", err);
-              return next(err);
-            }
-            
-            // Save the new session
-            req.session.save(async (err) => {
-              if (err) {
-                console.error("Error saving session:", err);
-                return next(err);
-              }
-              
-              console.log("Login successful - User ID:", user.id, "New Session ID:", req.sessionID);
-              console.log("Session cookie details:", {
-                name: 'campaign_session',
-                secure: SESSION_CONFIG.cookie.secure,
-                sameSite: SESSION_CONFIG.cookie.sameSite,
-                path: SESSION_CONFIG.cookie.path,
-                domain: SESSION_CONFIG.cookie.domain || 'not set'
-              });
-              
-              // Clean up any previous sessions for this user (async)
-              cleanupPreviousSessions(user.id).catch(console.error);
-              
-              // Return user without password
-              const { password, ...userWithoutPassword } = user;
-              res.status(200).json(userWithoutPassword);
-            });
-          });
-        });
+      // Handle the authentication and login process
+      handleAuthentication(user, req, res, next).catch(err => {
+        console.error("Error in authentication process:", err);
+        next(err);
       });
     })(req, res, next);
   });
@@ -364,17 +365,10 @@ export function setupAuth(app: Express): void {
     if (req.session && !req.isAuthenticated()) {
       console.log("Session exists but user is not authenticated. Possible session timeout.");
       
-      // Try to regenerate session to fix potential issues
-      return req.session.regenerate((err) => {
-        if (err) {
-          console.error("Error regenerating session:", err);
-          return next(err);
-        }
-        
-        return res.status(401).json({ 
-          authenticated: false,
-          message: "Session expired. Please log in again."
-        });
+      // Simply return 401 without regenerating session to avoid creating new sessions
+      return res.status(401).json({ 
+        authenticated: false,
+        message: "Session expired. Please log in again."
       });
     }
     
