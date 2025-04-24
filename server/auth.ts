@@ -50,8 +50,8 @@ export function setupAuth(app: Express): void {
   const sessionSettings: session.SessionOptions = {
     name: 'campaign_session',
     secret: SESSION_CONFIG.secret,
-    resave: true, // Changed to true to ensure session is saved
-    saveUninitialized: true, // Changed to true to ensure new sessions are saved
+    resave: true, // Must be true to ensure session is saved after each request
+    saveUninitialized: false, // Should be false to prevent anonymous sessions
     store: storage.sessionStore,
     rolling: true, // Reset expiration on every response
     proxy: true, // Trust proxy settings when behind a reverse proxy
@@ -63,6 +63,11 @@ export function setupAuth(app: Express): void {
       path: SESSION_CONFIG.cookie.path || '/'
     }
   };
+  
+  // Add domain if configured
+  if (SESSION_CONFIG.cookie.domain) {
+    sessionSettings.cookie!.domain = SESSION_CONFIG.cookie.domain;
+  }
   
   // Log session configuration for debugging
   console.log(`Session configuration: secret=${SESSION_CONFIG.secret.substring(0, 3)}..., cookie.secure=${SESSION_CONFIG.cookie.secure}, cookie.sameSite=${SESSION_CONFIG.cookie.sameSite}`);
@@ -221,10 +226,11 @@ export function setupAuth(app: Express): void {
           
           console.log("Login successful - User ID:", user.id, "Session ID:", req.sessionID);
           console.log("Session cookie details:", {
-            name: SESSION_CONFIG.cookie.sameSite,
+            name: 'campaign_session', // Fixed incorrect property
             secure: SESSION_CONFIG.cookie.secure,
             sameSite: SESSION_CONFIG.cookie.sameSite,
-            path: SESSION_CONFIG.cookie.path
+            path: SESSION_CONFIG.cookie.path,
+            domain: SESSION_CONFIG.cookie.domain || 'not set'
           });
           
           // Return user without password
@@ -259,8 +265,15 @@ export function setupAuth(app: Express): void {
         
         console.log(`Logout successful - User ID: ${userId}, Session destroyed: ${sessionId}`);
         
-        // Clear cookie
-        res.clearCookie('campaign_session');
+        // Clear cookie with same settings that were used to create it
+        res.clearCookie('campaign_session', {
+          path: SESSION_CONFIG.cookie.path,
+          httpOnly: true,
+          secure: SESSION_CONFIG.cookie.secure,
+          sameSite: SESSION_CONFIG.cookie.sameSite,
+          domain: SESSION_CONFIG.cookie.domain
+        });
+        
         res.status(200).json({ message: "Logged out successfully" });
       });
     });
@@ -269,7 +282,7 @@ export function setupAuth(app: Express): void {
   /**
    * Get current user endpoint with enhanced debugging
    */
-  app.get("/api/user", (req: Request, res: Response) => {
+  app.get("/api/user", (req: Request, res: Response, next: NextFunction) => {
     // Log request headers for debugging
     console.log("GET /api/user - Headers:", {
       cookie: req.headers.cookie ? 'Present' : 'Not present',
@@ -277,6 +290,24 @@ export function setupAuth(app: Express): void {
       hasSession: !!req.session,
       authenticated: req.isAuthenticated()
     });
+    
+    // Check for session but no authentication (possible timeout or invalid session)
+    if (req.session && !req.isAuthenticated()) {
+      console.log("Session exists but user is not authenticated. Possible session timeout.");
+      
+      // Try to regenerate session to fix potential issues
+      return req.session.regenerate((err) => {
+        if (err) {
+          console.error("Error regenerating session:", err);
+          return next(err);
+        }
+        
+        return res.status(401).json({ 
+          authenticated: false,
+          message: "Session expired. Please log in again."
+        });
+      });
+    }
     
     // Not authenticated
     if (!req.isAuthenticated() || !req.user) {
@@ -295,6 +326,7 @@ export function setupAuth(app: Express): void {
     req.session.save((err) => {
       if (err) {
         console.error("Error refreshing session:", err);
+        return next(err);
       }
       
       res.status(200).json({

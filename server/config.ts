@@ -71,10 +71,10 @@ export const EMAIL_CONFIG = {
 export const SESSION_CONFIG = {
   secret: process.env.SESSION_SECRET || 'fallback-secret-for-development-only',
   cookie: {
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours (reduced from 7 days for better security)
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
-    domain: undefined, // Let browser set this automatically
+    sameSite: process.env.NODE_ENV === 'production' ? 'lax' as const : 'lax' as const, // 'none' can cause issues even in production
+    domain: process.env.COOKIE_DOMAIN || undefined, // Can be set via env var if needed
     path: '/'
   },
   // Debug mode for session issues
