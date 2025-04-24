@@ -7,7 +7,9 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser, insertUserSchema } from "@shared/schema";
 import { SESSION_CONFIG, DB_CONFIG } from "./config";
-import { Pool } from 'pg';
+import pkg from 'pg';
+
+const { Pool } = pkg;
 
 // Global declaration for TypeScript passport integration
 declare global {
