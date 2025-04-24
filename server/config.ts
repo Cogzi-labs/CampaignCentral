@@ -52,11 +52,11 @@ if (typeof globalThis !== 'undefined' && typeof import.meta === 'object' && impo
 // Database configuration
 export const DB_CONFIG = {
   url: process.env.DATABASE_URL,
-  host: process.env.PGHOST,
+  /*host: process.env.PGHOST,
   port: process.env.PGPORT || '5432',
   user: process.env.PGUSER,
   password: process.env.PGPASSWORD,
-  database: process.env.PGDATABASE
+  database: process.env.PGDATABASE*/
 };
 
 // Email configuration (AWS SES)
