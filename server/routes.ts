@@ -6,6 +6,7 @@ import { contactValidationSchema, campaignValidationSchema } from "@shared/schem
 import multer from "multer";
 import { parse } from "csv-parse";
 import fs from "fs";
+import crypto from 'crypto';
 import * as path from "path";
 import { sendPasswordResetEmail, sendEmail } from "./email";
 import { scrypt, timingSafeEqual } from "crypto";
