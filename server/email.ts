@@ -13,6 +13,7 @@ AWS.config.update({
   accessKeyId: SES_USERNAME,
   secretAccessKey: SES_PASSWORD,
   region: SES_REGION,
+  signatureVersion: 'v4'
 });
 
 // Log loaded credentials (without sensitive information)
