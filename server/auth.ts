@@ -87,12 +87,24 @@ export function setupAuth(app: Express): void {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
-        // Find user by username
-        const user = await storage.getUserByUsername(username);
+        let user;
+        
+        // Check if the input appears to be an email address
+        const isEmail = username.includes('@');
+        
+        if (isEmail) {
+          // Find user by email
+          console.log(`Attempting login with email: ${username}`);
+          user = await storage.getUserByEmail(username);
+        } else {
+          // Find user by username
+          console.log(`Attempting login with username: ${username}`);
+          user = await storage.getUserByUsername(username);
+        }
         
         // Verify password if user exists
         if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false, { message: "Invalid username or password" });
+          return done(null, false, { message: "Invalid username/email or password" });
         }
         
         // Authentication successful
@@ -191,10 +203,10 @@ export function setupAuth(app: Express): void {
     // Validate request
     if (!req.body.username || !req.body.password) {
       console.log("Login attempt with missing credentials");
-      return res.status(400).json({ message: "Username and password are required" });
+      return res.status(400).json({ message: "Username/Email and password are required" });
     }
     
-    console.log(`Login attempt for username: ${req.body.username}`);
+    console.log(`Login attempt with identifier: ${req.body.username}`);
     
     // Check if the user is already logged in
     if (req.isAuthenticated() && req.user?.username === req.body.username) {
