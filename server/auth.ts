@@ -62,7 +62,7 @@ export function setupAuth(app: Express): void {
       maxAge: SESSION_CONFIG.cookie.maxAge,
       httpOnly: true, // Prevent JavaScript access
       sameSite: SESSION_CONFIG.cookie.sameSite, // Use from config
-      secure: SESSION_CONFIG.cookie.secure, // Use from config
+      secure: false,//SESSION_CONFIG.cookie.secure, // Use from config
       path: SESSION_CONFIG.cookie.path || '/'
     }
   };
