@@ -11,6 +11,7 @@ import * as path from "path";
 import { sendPasswordResetEmail, sendEmail } from "./email";
 import { scrypt, timingSafeEqual } from "crypto";
 import { promisify } from "util";
+import { API_CONFIG } from "./config";
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(process.cwd(), 'uploads');
@@ -429,8 +430,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Campaign API key not configured in settings. Please configure it in Settings > API Access." });
       }
 
+      // Get campaign API URL from environment config
+      const apiUrl = API_CONFIG.campaign.apiUrl;
+      console.log(`Using campaign API URL: ${apiUrl}`);
+      
       // Prepare request to campaign API
-      const apiUrl = "https://8x83b7rn4f.execute-api.ap-south-1.amazonaws.com/qa/campaign";
       const requestData = {
         campaignName: campaign.name,
         campaignId: campaign.id.toString(),

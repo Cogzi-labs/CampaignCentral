@@ -81,9 +81,13 @@ export const SESSION_CONFIG = {
   debug: process.env.NODE_ENV !== 'production'
 };
 
-// API keys
-export const API_KEYS = {
-  campaignApiKey: process.env.CAMPAIGN_API_KEY
+// API configurations
+export const API_CONFIG = {
+  // Campaign API settings
+  campaign: {
+    apiKey: process.env.CAMPAIGN_API_KEY,
+    apiUrl: process.env.CAMPAIGN_API_URL || "https://8x83b7rn4f.execute-api.ap-south-1.amazonaws.com/qa/campaign"
+  }
 };
 
 // Server configuration
