@@ -122,8 +122,6 @@ If you prefer to use the Drizzle ORM migration system or already have a database
 # Run the simplified migration script (recommended)
 bash scripts/apply_migrations.sh
 
-# Or for Windows users:
-scripts\apply_migrations.bat
 ```
 
 The migration script will:
@@ -164,12 +162,6 @@ chmod +x start.sh
 
 # Run the application
 ./start.sh
-```
-
-##### For Windows:
-```cmd
-# Run the application
-start-windows.bat
 ```
 
 The startup scripts will automatically:
@@ -256,17 +248,7 @@ npm run dev
   - Missing environment variables
   - Node.js version compatibility (v18+ recommended)
   
-- For containerized deployments, use start-prod.sh in your entrypoint command
 
-### Windows-Specific Issues
-- Make sure your .env file has no quotes around values
-- If environment variables aren't loading correctly:
-  - Try setting them manually in the command prompt: `set DATABASE_URL=your_url`
-  - Or in PowerShell: `$env:DATABASE_URL="your_url"`
-  - Restart your terminal after making any changes
-- The start-windows.bat script handles Windows path separators automatically
-
-### Email Sending Issues
 - For AWS SES email functionality, make sure these environment variables are set:
   - SES_USERNAME: Your AWS Access Key ID
   - SES_PASSWORD: Your AWS Secret Access Key  
@@ -299,7 +281,6 @@ npm run dev
 │   ├── create_session_table.js  # Creates session table for persistent sessions
 │   ├── create_session_table.sql # SQL definition for session table
 │   ├── apply_migrations.sh      # Bash script to apply all migrations including session table
-│   ├── apply_migrations.bat     # Windows batch script to apply all migrations
 │   ├── setup_db.sql       # Creates database user
 │   ├── grant_privileges.sql     # Grants database privileges
 │   ├── create_tables.sql  # Creates all tables and indexes
