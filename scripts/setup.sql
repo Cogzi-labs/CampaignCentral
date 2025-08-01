@@ -9,11 +9,18 @@ CREATE DATABASE campaign_db OWNER campaign_user;
 -- 2. Grant privileges
 GRANT ALL PRIVILEGES ON DATABASE campaign_db TO campaign_user;
 
--- 2. Grant privileges
-GRANT ALL PRIVILEGES ON DATABASE campaign_management TO campaign_manager;
-
 -- 3. Connect to the new database
 \c campaign_management
+
+DROP TABLE IF EXISTS
+  analytics,
+  campaigns,
+  users,
+  contacts,
+  settings,
+  "session",
+  accounts
+CASCADE;
 
 -- 4. Create tables
 CREATE TABLE IF NOT EXISTS accounts (
@@ -93,7 +100,6 @@ CREATE TABLE IF NOT EXISTS "session" (
 );
 CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
 
-\echo 'All tables created successfully!'
 
 -- 5. Insert seed data
 INSERT INTO accounts (name, created_at)
@@ -129,5 +135,4 @@ VALUES
   (1, 'https://graph.facebook.com/v17.0/123456789/message_templates', 'SAMPLE_FB_TOKEN', '+919876543210', 'waba_123456789', NOW())
 ON CONFLICT DO NOTHING;
 
-\echo 'Seed data inserted successfully!'
-\echo 'Database setup complete!'
+

@@ -155,20 +155,15 @@ npm run build
 
 #### 8. Start the server
 
-##### For Linux/Mac:
-```bash
-# Make sure the script is executable
-chmod +x start.sh
+Run the application after it has been built:
 
 # Run the application
-./start.sh
+```bash
+npm start
 ```
 
-The startup scripts will automatically:
-- Load environment variables from .env file
-- Construct DATABASE_URL from PostgreSQL variables if needed
-- Generate a SESSION_SECRET if not provided
-- Detect whether to run in production or development mode
+This command starts the compiled server from the `dist` directory. The server
+automatically loads environment variables from `.env` using `dotenv`.
 
 #### 9. Access the application
 Open your browser and navigate to:
