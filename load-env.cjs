@@ -3,7 +3,7 @@
  * Works on Windows, Mac, and Linux
  * 
  * Usage:
- *   node -r ./load-env.js yourScript.js
+ *   node -r ./load-env.cjs yourScript.js
  * 
  * This will load environment variables from .env before your script runs
  */
