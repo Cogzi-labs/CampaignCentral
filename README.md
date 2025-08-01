@@ -275,16 +275,12 @@ npm run dev
 │   └── schema.ts          # Database schema definitions
 ├── scripts/               # Database initialization and utility scripts
 │   ├── initialize_database.cjs  # Interactive database setup script
-│   ├── initialize_database.js   # Node.js version of database setup script
 │   ├── initialize_database.sh   # Bash version of database setup script
 │   ├── create_database.cjs      # Handles database creation outside transaction
 │   ├── create_session_table.js  # Creates session table for persistent sessions
 │   ├── create_session_table.sql # SQL definition for session table
 │   ├── apply_migrations.sh      # Bash script to apply all migrations including session table
-│   ├── setup_db.sql       # Creates database user
-│   ├── grant_privileges.sql     # Grants database privileges
-│   ├── create_tables.sql  # Creates all tables and indexes
-│   └── seed_data.sql      # Inserts default data
+│   └── setup.sql         # Combined SQL for user, database, tables and seed data
 └── ...
 ```
 

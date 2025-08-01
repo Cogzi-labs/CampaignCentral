@@ -12,11 +12,9 @@ The scripts in this directory will:
 
 ## Available Scripts
 
-- `setup_db.sql` - Creates the database and user with proper privileges
-- `create_tables.sql` - Creates all required tables and indexes
-- `seed_data.sql` - Adds initial sample data to the database
-- `initialize_database.sh` - Bash script that runs all SQL scripts in sequence
-- `initialize_database.js` - Node.js script that runs all SQL scripts in sequence
+- `setup.sql` - Single script that creates the database, user, all tables and indexes, and inserts seed data
+- `initialize_database.sh` - Bash script that runs the SQL setup (interactive)
+- `initialize_database.cjs` - Node.js script that performs the same tasks programmatically
 
 ## Running the Scripts
 
@@ -40,17 +38,10 @@ Follow the prompts to set up your database with custom values or use the default
 
 ### Option 3: Manual execution with psql
 
-If you prefer to run the scripts manually:
+If you prefer to run the SQL yourself:
 
 ```bash
-# Step 1: Create database and user (as superuser)
-sudo -u postgres psql -f setup_db.sql
-
-# Step 2: Create tables (as the new user)
-psql -U campaign_manager -d campaign_management -f create_tables.sql
-
-# Step 3: Add seed data (as the new user)
-psql -U campaign_manager -d campaign_management -f seed_data.sql
+sudo -u postgres psql -f setup.sql
 ```
 
 ## Default Credentials
