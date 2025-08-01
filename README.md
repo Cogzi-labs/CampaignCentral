@@ -154,16 +154,13 @@ npm run build
 ```
 
 #### 8. Start the server
-
-Run the application after it has been built:
-
 # Run the application
 ```bash
 npm start
 ```
 
-This command starts the compiled server from the `dist` directory. The server
-automatically loads environment variables from `.env` using `dotenv`.
+This command loads environment variables from `.env` and starts the compiled
+server from the `dist` directory.
 
 #### 9. Access the application
 Open your browser and navigate to:
