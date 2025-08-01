@@ -1,10 +1,12 @@
 # CampaignHub Installation Guide
 
-This guide explains how to install CampaignHub as a system service on Linux using systemd. This ensures that the application starts automatically when the system boots and restarts if it crashes.
+This guide explains how to run CampaignHub using [PM2](https://pm2.keymetrics.io/),
+a Node.js process manager. PM2 keeps the application running,
+restarts it if it crashes and can be configured to start on boot.
 
 ## Prerequisites
 
-- A Linux server with systemd (Ubuntu, Debian, CentOS, etc.)
+- A Linux server (Ubuntu, Debian, CentOS, etc.)
 - Node.js and npm installed
 - PostgreSQL database installed and configured
 - Git (to clone the repository)
@@ -54,58 +56,67 @@ node scripts/reset_database.js
 
 This will create all the necessary database tables and a default admin user.
 
-### 6. Install as a System Service
+### 6. Install PM2 and Start the App
+
+Install PM2 globally (may require `sudo`):
 
 ```bash
-sudo ./scripts/install_service.sh
+npm install -g pm2
 ```
 
-The script will:
-- Copy the service configuration to `/etc/systemd/system/`
-- Configure the service with the correct paths and user
-- Enable the service to start on boot
-- Offer to start the service immediately
-
-### 7. Verify the Service is Running
+Start the application with PM2:
 
 ```bash
-sudo systemctl status campaignhub
+pm2 start dist/index.js --name campaignhub
 ```
 
-You should see output indicating that the service is active (running).
+Configure PM2 to start on boot and save the process list:
+
+```bash
+pm2 startup
+pm2 save
+```
+
+### 7. Verify the Process is Running
+
+```bash
+pm2 status campaignhub
+```
+
+You should see output indicating that the process is online.
 
 ## Managing the Service
 
 ### Start the Service
 
 ```bash
-sudo systemctl start campaignhub
+pm2 start campaignhub
 ```
 
 ### Stop the Service
 
 ```bash
-sudo systemctl stop campaignhub
+pm2 stop campaignhub
 ```
 
 ### Restart the Service
 
 ```bash
-sudo systemctl restart campaignhub
+pm2 restart campaignhub
 ```
 
 ### View the Service Logs
 
 ```bash
-sudo journalctl -u campaignhub -f
+pm2 logs campaignhub
 ```
 
-### Uninstall the Service
+### Remove the Service
 
-If you need to remove the service:
+To stop and remove the PM2 process:
 
 ```bash
-sudo ./scripts/uninstall_service.sh
+pm2 delete campaignhub
 ```
 
 ## Troubleshooting
@@ -115,7 +126,7 @@ sudo ./scripts/uninstall_service.sh
 Check the logs for details:
 
 ```bash
-sudo journalctl -u campaignhub -e
+pm2 logs campaignhub
 ```
 
 Common issues include:
@@ -168,5 +179,5 @@ To update the application:
 
 4. Restart the service:
    ```bash
-   sudo systemctl restart campaignhub
+   pm2 restart campaignhub
    ```
