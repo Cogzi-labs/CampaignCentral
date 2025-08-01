@@ -3,8 +3,11 @@
 -- Run as a PostgreSQL superuser
 
 -- 1. Create the application user and database
-CREATE USER campaign_manager WITH PASSWORD 'your_secure_password' CREATEDB;
-CREATE DATABASE campaign_management OWNER campaign_manager;
+CREATE USER campaign_user WITH PASSWORD 'your_password' CREATEDB;
+CREATE DATABASE campaign_db OWNER campaign_user;
+
+-- 2. Grant privileges
+GRANT ALL PRIVILEGES ON DATABASE campaign_db TO campaign_user;
 
 -- 2. Grant privileges
 GRANT ALL PRIVILEGES ON DATABASE campaign_management TO campaign_manager;
