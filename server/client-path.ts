@@ -24,5 +24,5 @@ export function getClientIndexPath(): string {
  * @returns {string} - Absolute path to the client's build directory
  */
 export function getClientBuildDir(): string {
-  return path.resolve(process.cwd(), 'public');
+  return path.resolve(process.cwd(), 'dist');
 }

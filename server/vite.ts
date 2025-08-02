@@ -73,12 +73,12 @@ export async function setupVite(app: Express, server: Server) {
 
 export function serveStatic(app: Express) {
   // When running the server in production we expect the client
-  // build output to live in the top-level `dist/public` directory.
+  // build output to live directly in the top-level `dist` directory.
   // In development the server is executed from the `server` directory
   // while the compiled production build runs from `dist`. Resolving the
   // path using the project root ensures static files are found in both
   // scenarios.
-  const distPath = path.resolve(__dirname, "..", "dist", "public");
+  const distPath = path.resolve(__dirname, "..", "dist");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(

@@ -149,7 +149,7 @@ npm install --save-dev vite @vitejs/plugin-react esbuild typescript @replit/vite
 ```
 
 #### 7. Build the application
-Run the production build so the `dist/public` directory is generated:
+Run the production build so the `dist` directory is generated:
 ```bash
 npm run build
 ```
