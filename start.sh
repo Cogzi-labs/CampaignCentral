@@ -33,7 +33,7 @@ if [ -z "$SESSION_SECRET" ]; then
 fi
 
 # Determine mode
-if [ -d "dist/public" ] && [ -f "dist/index.js" ]; then
+if [ -f "dist/index.html" ] && [ -f "dist/index.js" ]; then
   echo "Starting in PRODUCTION mode..."
   NODE_ENV=production node dist/index.js
 else

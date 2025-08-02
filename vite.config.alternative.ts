@@ -32,7 +32,9 @@ export default defineConfig({
   },
   root: path.resolve(__dirname, "client"),
   build: {
-    outDir: path.resolve(__dirname, "dist/public"),
+    // Output client build directly to top-level dist folder
+    outDir: path.resolve(__dirname, "dist"),
+    assetsDir: "",
     emptyOutDir: true,
   },
 });
