@@ -35,8 +35,19 @@ async function hashPassword(password: string): Promise<string> {
  */
 async function comparePasswords(supplied: string, stored: string): Promise<boolean> {
   const [hashed, salt] = stored.split(".");
+  if (!hashed || !salt) {
+    console.warn("Invalid stored hash format");
+    return false;
+  }
+
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+
+  if (hashedBuf.length !== suppliedBuf.length) {
+    console.warn("Hash length mismatch");
+    return false;
+  }
+
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
