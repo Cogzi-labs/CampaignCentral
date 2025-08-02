@@ -15,7 +15,10 @@ CREATE TABLE IF NOT EXISTS users (
   username TEXT NOT NULL UNIQUE,
   password TEXT NOT NULL,
   name TEXT NOT NULL,
+  email TEXT,
   account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  reset_token TEXT,
+  reset_token_expiry TIMESTAMP,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);

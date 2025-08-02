@@ -10,8 +10,8 @@ RETURNING id;
 
 -- Insert admin user (password is 'admin123' - change in production!)
 -- Note: In production, use proper password hashing
-INSERT INTO users (username, password, name, account_id, created_at)
-VALUES ('admin', '$2b$10$Vt5xmUMkMZVR26myzEYVCeIdMEr8eVa.fBQmgn6S8Zrdi2XJ80Wca', 'Administrator', 1, NOW())
+INSERT INTO users (username, password, name, email, account_id, created_at)
+VALUES ('admin', '$2b$10$Vt5xmUMkMZVR26myzEYVCeIdMEr8eVa.fBQmgn6S8Zrdi2XJ80Wca', 'Administrator', 'admin@example.com', 1, NOW())
 ON CONFLICT (username) DO NOTHING;
 
 -- Insert sample contacts

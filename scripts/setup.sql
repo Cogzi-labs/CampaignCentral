@@ -34,7 +34,10 @@ CREATE TABLE IF NOT EXISTS users (
   username TEXT NOT NULL UNIQUE,
   password TEXT NOT NULL,
   name TEXT NOT NULL,
+  email TEXT,
   account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  reset_token TEXT,
+  reset_token_expiry TIMESTAMP,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
@@ -107,8 +110,8 @@ VALUES ('Default Account', NOW())
 ON CONFLICT (id) DO NOTHING
 RETURNING id;
 
-INSERT INTO users (username, password, name, account_id, created_at)
-VALUES ('admin', '$2b$10$Vt5xmUMkMZVR26myzEYVCeIdMEr8eVa.fBQmgn6S8Zrdi2XJ80Wca', 'Administrator', 1, NOW())
+INSERT INTO users (username, password, name, email, account_id, created_at)
+VALUES ('admin', '$2b$10$Vt5xmUMkMZVR26myzEYVCeIdMEr8eVa.fBQmgn6S8Zrdi2XJ80Wca', 'Administrator', 'admin@example.com', 1, NOW())
 ON CONFLICT (username) DO NOTHING;
 
 INSERT INTO contacts (name, mobile, location, label, account_id, created_at)
