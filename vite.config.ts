@@ -4,22 +4,22 @@ import react from "@vitejs/plugin-react";
 import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export default defineConfig({
-  plugins: [
+export default defineConfig(async () => {
+  const plugins = [
     react(),
-    ...(process.env.NODE_ENV !== "production"
-      ? [runtimeErrorOverlay()]
-      : []),
+    ...(process.env.NODE_ENV !== "production" ? [runtimeErrorOverlay()] : []),
     themePlugin(),
-    ...(process.env.NODE_ENV !== "production" &&
+  ];
+
+  if (
+    process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
   ) {
-    const { cartographer } = await import(
-      "@replit/vite-plugin-cartographer"
-    );
+    const { cartographer } = await import("@replit/vite-plugin-cartographer");
     plugins.push(cartographer());
   }
 
@@ -39,3 +39,4 @@ export default defineConfig({
     },
   };
 });
+
