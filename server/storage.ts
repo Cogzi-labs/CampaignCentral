@@ -1,9 +1,10 @@
 import { 
   users, type User, type InsertUser, 
   contacts, type Contact, type InsertContact, 
-  campaigns, type Campaign, type InsertCampaign, 
+  campaigns, type Campaign, type InsertCampaign,
   analytics, type Analytics, type InsertAnalytics,
-  settings, type Settings, type InsertSettings
+  settings, type Settings, type InsertSettings,
+  messages, type Message, type InsertMessage
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -58,7 +59,10 @@ export interface IStorage {
   // Analytics methods
   getAnalytics(accountId: number, campaignId?: number): Promise<Analytics[]>;
   createOrUpdateAnalytics(analytics: InsertAnalytics): Promise<Analytics>;
-  
+
+  // Message methods
+  logMessage(message: InsertMessage): Promise<Message>;
+
   // Settings methods
   getSettings(accountId: number): Promise<Settings | undefined>;
   updateSettings(accountId: number, settings: Partial<InsertSettings>): Promise<Settings>;
@@ -517,7 +521,21 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return result[0];
   }
-  
+
+  async logMessage(message: InsertMessage): Promise<Message> {
+    const result = await db
+      .insert(messages)
+      .values({
+        ...message,
+        messageId: message.messageId || null,
+        error: message.error || null,
+        createdAt: new Date(),
+        status: message.status || "sent"
+      })
+      .returning();
+    return result[0];
+  }
+
   // SETTINGS METHODS
   async getSettings(accountId: number): Promise<Settings | undefined> {
     const result = await db
@@ -565,6 +583,7 @@ export class MemStorage implements IStorage {
   private campaigns: Map<number, Campaign>;
   private analyticsData: Map<number, Analytics>;
   private settingsData: Map<number, Settings>;
+  private messages: Map<number, Message>;
   sessionStore: session.Store;
   
   private userCurrentId: number;
@@ -572,6 +591,7 @@ export class MemStorage implements IStorage {
   private campaignCurrentId: number;
   private analyticsCurrentId: number;
   private settingsCurrentId: number;
+  private messageCurrentId: number;
 
   constructor() {
     this.users = new Map();
@@ -579,12 +599,14 @@ export class MemStorage implements IStorage {
     this.campaigns = new Map();
     this.analyticsData = new Map();
     this.settingsData = new Map();
+    this.messages = new Map();
     
     this.userCurrentId = 1;
     this.contactCurrentId = 1;
     this.campaignCurrentId = 1;
     this.analyticsCurrentId = 1;
     this.settingsCurrentId = 1;
+    this.messageCurrentId = 1;
     
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // 24h
@@ -949,7 +971,23 @@ export class MemStorage implements IStorage {
     this.analyticsData.set(id, analytics);
     return analytics;
   }
-  
+
+  async logMessage(message: InsertMessage): Promise<Message> {
+    const id = this.messageCurrentId++;
+    const createdAt = new Date();
+    const msg: Message = {
+      id,
+      campaignId: message.campaignId,
+      contactId: message.contactId,
+      messageId: message.messageId || null,
+      status: message.status || "sent",
+      error: message.error || null,
+      createdAt,
+    };
+    this.messages.set(id, msg);
+    return msg;
+  }
+
   // SETTINGS METHODS
   async getSettings(accountId: number): Promise<Settings | undefined> {
     return Array.from(this.settingsData.values()).find(
