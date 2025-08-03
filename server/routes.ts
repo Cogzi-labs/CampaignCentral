@@ -316,7 +316,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         accountId: user.accountId
       });
-      
+
+      // Fetch contacts for this campaign based on label (if any)
+      const contacts = await storage.getContacts(
+        user.accountId,
+        campaign.contactLabel ? { label: campaign.contactLabel } : undefined
+      );
+
+      // Send WhatsApp template message to each contact
+      for (const contact of contacts) {
+        try {
+          const payload = {
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: contact.mobile,
+            type: "template",
+            template: {
+              name: campaign.template,
+              language: { code: "en_US" }
+            }
+          };
+
+          const response = await fetch(API_CONFIG.waba.apiUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${API_CONFIG.waba.accessToken}`
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const result = await response.json();
+
+          await storage.logMessage({
+            campaignId: campaign.id,
+            contactId: contact.id,
+            messageId: result?.messages?.[0]?.id || null,
+            status: response.ok ? "sent" : "failed",
+            error: response.ok ? null : JSON.stringify(result)
+          });
+        } catch (err) {
+          await storage.logMessage({
+            campaignId: campaign.id,
+            contactId: contact.id,
+            status: "failed",
+            error: (err as Error).message
+          });
+        }
+      }
+
+      // Update analytics with sent count
+      const existingAnalytics = await storage.getAnalytics(user.accountId, campaign.id);
+      const currentSent = existingAnalytics[0]?.sent || 0;
+      await storage.createOrUpdateAnalytics({
+        campaignId: campaign.id,
+        accountId: user.accountId,
+        sent: currentSent + contacts.length
+      });
+
       res.status(201).json(campaign);
     } catch (error) {
       res.status(500).json({ message: "Error creating campaign", error: (error as Error).message });

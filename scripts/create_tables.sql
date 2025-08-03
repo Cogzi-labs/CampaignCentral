@@ -68,6 +68,19 @@ CREATE TABLE IF NOT EXISTS analytics (
 CREATE INDEX IF NOT EXISTS idx_analytics_campaign_id ON analytics(campaign_id);
 CREATE INDEX IF NOT EXISTS idx_analytics_account_id ON analytics(account_id);
 
+-- Create messages table
+CREATE TABLE IF NOT EXISTS messages (
+  id SERIAL PRIMARY KEY,
+  campaign_id INTEGER NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  contact_id INTEGER NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+  message_id TEXT,
+  status TEXT NOT NULL DEFAULT 'sent',
+  error TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_messages_campaign_id ON messages(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_messages_contact_id ON messages(contact_id);
+
 -- Create settings table
 CREATE TABLE IF NOT EXISTS settings (
   id SERIAL PRIMARY KEY,

@@ -98,6 +98,25 @@ export const insertAnalyticsSchema = createInsertSchema(analytics).pick({
   accountId: true,
 });
 
+// Messages schema
+export const messages = pgTable("messages", {
+  id: serial("id").primaryKey(),
+  campaignId: integer("campaign_id").notNull().references(() => campaigns.id),
+  contactId: integer("contact_id").notNull().references(() => contacts.id),
+  messageId: text("message_id"),
+  status: text("status").notNull().default("sent"),
+  error: text("error"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertMessageSchema = createInsertSchema(messages).pick({
+  campaignId: true,
+  contactId: true,
+  messageId: true,
+  status: true,
+  error: true,
+});
+
 // Define types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -113,6 +132,9 @@ export type Campaign = typeof campaigns.$inferSelect;
 
 export type InsertAnalytics = z.infer<typeof insertAnalyticsSchema>;
 export type Analytics = typeof analytics.$inferSelect;
+
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Message = typeof messages.$inferSelect;
 
 // Settings schema
 export const settings = pgTable("settings", {
