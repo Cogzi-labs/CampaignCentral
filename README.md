@@ -261,7 +261,12 @@ npm run dev
 │   │   └── ...
 ├── server/                # Backend Express server
 │   ├── auth.ts            # Authentication logic
-│   ├── routes.ts          # API routes
+│   ├── routes.ts          # API route registration
+│   ├── contacts.ts        # Contacts API routes
+│   ├── campaigns.ts       # Campaigns API routes
+│   ├── settings.ts        # Settings API routes
+│   ├── templates.ts       # Templates API routes
+│   ├── analytics.ts       # Analytics API routes
 │   ├── storage.ts         # Data storage interface
 │   └── ...
 ├── shared/                # Shared code between client and server
