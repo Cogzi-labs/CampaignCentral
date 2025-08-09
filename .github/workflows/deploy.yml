@@ -50,7 +50,15 @@ jobs:
             LATEST_RELEASE=$(ls -t $RELEASE_DIR | head -n 1)
 
             ln -sfn "$RELEASE_DIR/$LATEST_RELEASE" "$CURRENT_LINK"
-            pm2 restart reach-app
+            # Check if pm2 process 'reach-app' exists
+            pm2 describe reach-app > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+             # Start the app if not running
+             pm2 start $CURRENT_LINK/index.js --name reach-app
+            else
+              # Restart the app if it exists
+              pm2 restart reach-app
+            fi
 
   rollback:
     runs-on: ubuntu-latest
