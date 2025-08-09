@@ -54,7 +54,7 @@ jobs:
             pm2 describe reach-app > /dev/null 2>&1
             if [ $? -ne 0 ]; then
              # Start the app if not running
-             pm2 start $CURRENT_LINK/index.js --name reach-app
+             pm2 start $CURRENT_LINK/dist/index.js --name reach-app
             else
               # Restart the app if it exists
               pm2 restart reach-app
