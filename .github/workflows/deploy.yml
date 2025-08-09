@@ -17,6 +17,24 @@ jobs:
         with:
           node-version: 20
 
+      - name: Create .env file
+        run: |
+          cat <<EOF > .env
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          SESSION_SECRET=${{ secrets.SESSION_SECRET }}
+          PORT=${{ secrets.PORT }}
+          SES_HOST=${{ secrets.SES_HOST }}
+          SES_PORT=${{ secrets.SES_PORT }}
+          SES_AUTH=${{ secrets.SES_AUTH }}
+          SES_DOMAIN=${{ secrets.SES_DOMAIN }}
+          SES_USERNAME=${{ secrets.SES_USERNAME }}
+          SES_PASSWORD=${{ secrets.SES_PASSWORD }}
+          SES_SENDER=${{ secrets.SES_SENDER }}
+          CAMPAIGN_API_URL=${{ secrets.CAMPAIGN_API_URL }}
+          WABA_API_URL=${{ secrets.WABA_API_URL }}
+          WABA_ACCESS_TOKEN=${{ secrets.WABA_ACCESS_TOKEN }}
+          EOF
+
       - name: Install dependencies
         run: npm ci
 
