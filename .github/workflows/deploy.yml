@@ -33,7 +33,10 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "dist/*"
+          source: |
+           "dist/*"
+           "package.json"
+           "package-lock.json"
           target: "/var/www/reach.cogzi.io/releases/${{ env.RELEASE_TIME }}"
           debug: true
 
@@ -63,6 +66,10 @@ jobs:
               # Restart the app if it exists
               pm2 restart reach-app
             fi
+
+            # Cleanup: keep only last 3 releases, delete older ones
+            cd $RELEASE_DIR
+            ls -1tr | head -n -3 | xargs -r rm -rf --
 
   rollback:
     runs-on: ubuntu-latest
