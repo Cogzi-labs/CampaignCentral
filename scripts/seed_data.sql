@@ -37,9 +37,9 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- Insert sample settings
-INSERT INTO settings (account_id, waba_api_url, facebook_access_token, partner_mobile, waba_id, updated_at)
-VALUES 
-  (1, 'https://graph.facebook.com/v17.0/123456789/message_templates', 'SAMPLE_FB_TOKEN', '+919876543210', 'waba_123456789', NOW())
+INSERT INTO settings (account_id, facebook_access_token, partner_mobile, waba_id, updated_at)
+VALUES
+  (1, 'SAMPLE_FB_TOKEN', '+919876543210', 'waba_123456789', NOW())
 ON CONFLICT DO NOTHING;
 
 -- Output success message

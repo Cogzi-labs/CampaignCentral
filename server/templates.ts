@@ -13,15 +13,15 @@ export function createTemplatesRouter(checkAuth: (req: Request, res: Response, n
       // Get settings for the user's account
       const settings = await storage.getSettings(user.accountId);
 
-      if (!settings || !settings.wabaApiUrl || !settings.facebookAccessToken) {
+      if (!settings || !settings.wabaId || !settings.facebookAccessToken) {
         return res.status(400).json({
           message: "Facebook API settings not configured",
           code: "SETTINGS_MISSING",
         });
       }
 
-      // Facebook Graph API call using account-specific settings
-      const response = await fetch(`${settings.wabaApiUrl}`, {
+      // Facebook Graph API call using account-specific WABA ID
+      const response = await fetch(`https://graph.facebook.com/v17.0/${settings.wabaId}/message_templates`, {
         headers: {
           Authorization: `Bearer ${settings.facebookAccessToken}`,
         },

@@ -77,11 +77,9 @@ CREATE TABLE "analytics" (
 CREATE TABLE "settings" (
   "id" serial PRIMARY KEY NOT NULL,
   "account_id" integer NOT NULL,
-  "waba_api_url" text,
   "facebook_access_token" text,
   "partner_mobile" text,
   "waba_id" text,
-  "campaign_api_key" text,
   "updated_at" timestamp DEFAULT now() NOT NULL,
   CONSTRAINT "settings_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "accounts"("id") ON DELETE CASCADE
 );

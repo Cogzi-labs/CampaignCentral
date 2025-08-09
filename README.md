@@ -339,11 +339,9 @@ Campaign performance metrics
 Account-specific settings, including API configuration
 - `id`: Primary key
 - `account_id`: Foreign key to accounts table
-- `waba_api_url`: WhatsApp Business API URL
 - `facebook_access_token`: API token for Facebook
 - `partner_mobile`: Partner mobile number
 - `waba_id`: WhatsApp Business Account ID
-- `campaign_api_key`: API key for campaign launching
 - `updated_at`: Last update timestamp
 
 ### session
