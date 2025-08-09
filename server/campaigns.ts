@@ -1,7 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { campaignValidationSchema } from "@shared/schema";
 import { storage } from "./storage";
-import { API_CONFIG } from "./config";
 
 export function createCampaignsRouter(checkAuth: (req: Request, res: Response, next: Function) => void) {
   const router = Router();
@@ -48,37 +47,15 @@ export function createCampaignsRouter(checkAuth: (req: Request, res: Response, n
         campaign.contactLabel ? { label: campaign.contactLabel } : undefined
       );
 
-      // Send WhatsApp template message to each contact
+      // Log a message entry for each contact (no external API call)
       for (const contact of contacts) {
         try {
-          const payload = {
-            messaging_product: "whatsapp",
-            recipient_type: "individual",
-            to: contact.mobile,
-            type: "template",
-            template: {
-              name: campaign.template,
-              language: { code: "en_US" }
-            }
-          };
-
-          const response = await fetch(API_CONFIG.waba.apiUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${API_CONFIG.waba.accessToken}`
-            },
-            body: JSON.stringify(payload)
-          });
-
-          const result = await response.json();
-
           await storage.logMessage({
             campaignId: campaign.id,
             contactId: contact.id,
-            messageId: result?.messages?.[0]?.id || null,
-            status: response.ok ? "sent" : "failed",
-            error: response.ok ? null : JSON.stringify(result)
+            messageId: null,
+            status: "sent",
+            error: null
           });
         } catch (err) {
           await storage.logMessage({
@@ -205,69 +182,13 @@ export function createCampaignsRouter(checkAuth: (req: Request, res: Response, n
       // Format contacts data for the API
       const contactsData = contacts.map(contact => [contact.mobile, contact.name]);
 
-      // Get campaign API key from settings
-      const apiKey = settings.campaignApiKey;
-      if (!apiKey) {
-        console.error("Campaign API key not found in settings");
-        return res.status(500).json({ message: "Campaign API key not configured in settings. Please configure it in Settings > API Access." });
-      }
+      // For now, simply mark campaign as launched without calling external API
+      const success = await storage.launchCampaign(campaignId);
 
-      // Get campaign API URL from environment config
-      const apiUrl = API_CONFIG.campaign.apiUrl;
-      console.log(`Using campaign API URL: ${apiUrl}`);
-
-      // Prepare request to campaign API
-      const requestData = {
-        campaignName: campaign.name,
-        campaignId: campaign.id.toString(),
-        templateName: campaign.template,
-        partnerMobile: settings.partnerMobile,
-        data: contactsData,
-        WABAID: settings.wabaId
-      };
-
-      console.log("Sending campaign to API:", JSON.stringify(requestData, null, 2));
-
-      try {
-        const apiResponse = await fetch(apiUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": apiKey
-          },
-          body: JSON.stringify(requestData)
-        });
-
-        const apiResult = await apiResponse.json();
-
-        if (!apiResponse.ok) {
-          console.error("Campaign API error:", apiResult);
-          return res.status(apiResponse.status).json({
-            message: "Campaign API error",
-            apiError: apiResult
-          });
-        }
-
-        // Update campaign status in database
-        const success = await storage.launchCampaign(campaignId);
-
-        if (success) {
-          res.status(200).json({
-            message: "Campaign launched successfully",
-            apiResponse: apiResult
-          });
-        } else {
-          res.status(500).json({
-            message: "Campaign API call succeeded but failed to update local database",
-            apiResponse: apiResult
-          });
-        }
-      } catch (apiError) {
-        console.error("Campaign API call failed:", apiError);
-        return res.status(500).json({
-          message: "Failed to connect to campaign API",
-          error: (apiError as Error).message
-        });
+      if (success) {
+        res.status(200).json({ message: "Campaign launched successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to update campaign status" });
       }
     } catch (error) {
       console.error("Error launching campaign:", error);

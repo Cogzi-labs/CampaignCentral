@@ -29,22 +29,18 @@ import {
 export default function SettingsPage() {
   // State for WhatsApp Business API settings
   const [whatsappSettings, setWhatsappSettings] = useState({
-    wabaApiUrl: '',
     facebookAccessToken: '',
     partnerMobile: '',
-    wabaId: '',
-    campaignApiKey: ''
+    wabaId: ''
   });
   
   // Settings type definition
   interface SettingsData {
     id: number;
     accountId: number;
-    wabaApiUrl: string | null;
     facebookAccessToken: string | null;
     partnerMobile: string | null;
     wabaId: string | null;
-    campaignApiKey: string | null;
     updatedAt: string;
   }
 
@@ -61,11 +57,9 @@ export default function SettingsPage() {
   React.useEffect(() => {
     if (settings) {
       setWhatsappSettings({
-        wabaApiUrl: settings.wabaApiUrl ? settings.wabaApiUrl : '',
         facebookAccessToken: settings.facebookAccessToken ? settings.facebookAccessToken : '',
         partnerMobile: settings.partnerMobile ? settings.partnerMobile : '',
-        wabaId: settings.wabaId ? settings.wabaId : '',
-        campaignApiKey: settings.campaignApiKey ? settings.campaignApiKey : ''
+        wabaId: settings.wabaId ? settings.wabaId : ''
       });
     }
   }, [settings]);
@@ -473,24 +467,8 @@ export default function SettingsPage() {
                   <form onSubmit={handleSaveWhatsAppSettings}>
                     <div className="space-y-4 mb-4">
                       <div className="space-y-2">
-                        <Label htmlFor="wabaApiUrl">WhatsApp Business API URL</Label>
-                        <Input 
-                          id="wabaApiUrl"
-                          placeholder="Enter your WhatsApp Business API URL"
-                          value={whatsappSettings.wabaApiUrl}
-                          onChange={(e) => setWhatsappSettings({
-                            ...whatsappSettings,
-                            wabaApiUrl: e.target.value
-                          })}
-                        />
-                        <p className="text-xs text-gray-500">
-                          Full Graph API URL for fetching message templates (e.g., https://graph.facebook.com/v22.0/YOUR_WABA_ID/message_templates)
-                        </p>
-                      </div>
-                      
-                      <div className="space-y-2">
                         <Label htmlFor="facebookAccessToken">Facebook Access Token</Label>
-                        <Input 
+                        <Input
                           id="facebookAccessToken"
                           type="password"
                           placeholder="Enter your Facebook Access Token"
@@ -537,22 +515,6 @@ export default function SettingsPage() {
                         </p>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="campaignApiKey">Campaign API Key</Label>
-                        <Input 
-                          id="campaignApiKey"
-                          type="password"
-                          placeholder="Enter your Campaign API Key"
-                          value={whatsappSettings.campaignApiKey}
-                          onChange={(e) => setWhatsappSettings({
-                            ...whatsappSettings,
-                            campaignApiKey: e.target.value
-                          })}
-                        />
-                        <p className="text-xs text-gray-500">
-                          API key for campaign service to authenticate API requests
-                        </p>
-                      </div>
                     </div>
                     
                     <div className="flex justify-end">

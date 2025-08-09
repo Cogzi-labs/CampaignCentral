@@ -81,20 +81,6 @@ export const SESSION_CONFIG = {
   debug: process.env.NODE_ENV !== 'production'
 };
 
-// API configurations
-export const API_CONFIG = {
-  // Campaign API settings
-  campaign: {
-    apiKey: process.env.CAMPAIGN_API_KEY,
-    apiUrl: process.env.CAMPAIGN_API_URL || "https://8x83b7rn4f.execute-api.ap-south-1.amazonaws.com/qa/campaign"
-  },
-  // WhatsApp Business API settings
-  waba: {
-    apiUrl: process.env.WABA_API_URL || "",
-    accessToken: process.env.WABA_ACCESS_TOKEN || ""
-  }
-};
-
 // Server configuration
 export const SERVER_CONFIG = {
   port: parseInt(process.env.PORT || '5000', 10),

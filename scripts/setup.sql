@@ -87,7 +87,6 @@ CREATE INDEX IF NOT EXISTS idx_analytics_account_id ON analytics(account_id);
 CREATE TABLE IF NOT EXISTS settings (
   id SERIAL PRIMARY KEY,
   account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-  waba_api_url TEXT,
   facebook_access_token TEXT,
   partner_mobile TEXT,
   waba_id TEXT,
@@ -133,9 +132,9 @@ VALUES
   (2, 50, 48, 40, 2, 1, 1, 1, NOW())
 ON CONFLICT DO NOTHING;
 
-INSERT INTO settings (account_id, waba_api_url, facebook_access_token, partner_mobile, waba_id, updated_at)
+INSERT INTO settings (account_id, facebook_access_token, partner_mobile, waba_id, updated_at)
 VALUES
-  (1, 'https://graph.facebook.com/v17.0/123456789/message_templates', 'SAMPLE_FB_TOKEN', '+919876543210', 'waba_123456789', NOW())
+  (1, 'SAMPLE_FB_TOKEN', '+919876543210', 'waba_123456789', NOW())
 ON CONFLICT DO NOTHING;
 
 

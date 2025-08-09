@@ -1013,15 +1013,13 @@ export class MemStorage implements IStorage {
     // Create new settings
     const id = this.settingsCurrentId++;
     const updatedAt = new Date();
-    const settings: Settings = { 
-      id, 
+    const settings: Settings = {
+      id,
       accountId,
       updatedAt,
-      wabaApiUrl: settingsData.wabaApiUrl || null,
       facebookAccessToken: settingsData.facebookAccessToken || null,
       partnerMobile: settingsData.partnerMobile || null,
-      wabaId: settingsData.wabaId || null,
-      campaignApiKey: settingsData.campaignApiKey || null
+      wabaId: settingsData.wabaId || null
     };
     this.settingsData.set(id, settings);
     return settings;

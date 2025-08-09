@@ -85,7 +85,6 @@ CREATE INDEX IF NOT EXISTS idx_messages_contact_id ON messages(contact_id);
 CREATE TABLE IF NOT EXISTS settings (
   id SERIAL PRIMARY KEY,
   account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-  waba_api_url TEXT,
   facebook_access_token TEXT,
   partner_mobile TEXT,
   waba_id TEXT,
