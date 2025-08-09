@@ -1,5 +1,5 @@
 import AWS from 'aws-sdk';
-import { log } from './vite';
+import { log } from './logger';
 import { EMAIL_CONFIG } from './config';
 
 // Get credentials from configuration
