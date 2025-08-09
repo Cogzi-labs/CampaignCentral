@@ -71,6 +71,7 @@ jobs:
             ln -sfn "$RELEASE_DIR/$LATEST_RELEASE" "$CURRENT_LINK"
             # Install production dependencies inside the new release folder
             cd "$RELEASE_DIR/$LATEST_RELEASE/dist"
+            npm install vite --save
             npm install --production
             cd ..
 
