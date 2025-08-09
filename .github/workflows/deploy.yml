@@ -72,9 +72,10 @@ jobs:
 
             ln -sfn "$RELEASE_DIR/$LATEST_RELEASE" "$CURRENT_LINK"
             # Install production dependencies inside the new release folder
-            cd "$RELEASE_DIR/$LATEST_RELEASE"
+            cd "$RELEASE_DIR/$LATEST_RELEASE/dist"
             npm install --production
-
+            cd ..
+            
             # Check if pm2 process 'reach-app' exists
             pm2 describe reach-app > /dev/null 2>&1
             if [ $? -ne 0 ]; then
