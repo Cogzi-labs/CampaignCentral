@@ -3,7 +3,7 @@ import "./config";
 
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { serveStatic } from "./vite";
+import { serveStatic } from "./static";
 import { log } from "./logger";
 import cors from "cors";
 import { SERVER_CONFIG } from "./config";
