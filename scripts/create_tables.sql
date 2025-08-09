@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
   contact_label TEXT,
   status TEXT NOT NULL DEFAULT 'draft',
   account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-  scheduled_at TIMESTAMP,
+  scheduled_for TIMESTAMP,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_campaigns_account_id ON campaigns(account_id);
