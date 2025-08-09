@@ -54,7 +54,8 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "dist/*"
+          # Include the generated .env file so each release has required env variables
+          source: "dist/*,.env"
           target: "/var/www/reach.cogzi.io/releases/${{ env.RELEASE_TIME }}"
           debug: true
 
