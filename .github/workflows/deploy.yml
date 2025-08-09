@@ -24,10 +24,14 @@ jobs:
         run: npm run build
 
       - name: Debug SSH connection
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" 
-          echo "Host: ${{ secrets.EC2_HOST }}"
-          echo "Host: ${{ secrets.EC2_USER }}"
+          echo "Key: $EC2_UEC2_SSH_KEY" 
+          echo "Host: $EC2_HOST"
+          echo "User: $EC2_USER"
 
       - name: Deploy to server
         uses: appleboy/scp-action@master
