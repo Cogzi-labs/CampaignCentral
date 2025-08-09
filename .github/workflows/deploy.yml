@@ -23,6 +23,9 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Copy package.json to dist
+        run: cp package.json dist/
+
       - name: Set release folder name
         id: vars
         run: echo "RELEASE_TIME=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
