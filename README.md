@@ -319,7 +319,7 @@ Marketing campaigns created by users
 - `contact_label`: Optional label to filter contacts
 - `status`: Campaign status (draft, scheduled, sent, etc.)
 - `account_id`: Foreign key to accounts table
-- `scheduled_at`: Optional future scheduling timestamp
+- `scheduled_for`: Optional future scheduling timestamp
 - `created_at`: Creation timestamp
 
 ### analytics

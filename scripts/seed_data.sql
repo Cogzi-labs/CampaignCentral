@@ -23,7 +23,7 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- Insert sample campaign templates
-INSERT INTO campaigns (name, template, contact_label, status, account_id, scheduled_at, created_at)
+INSERT INTO campaigns (name, template, contact_label, status, account_id, scheduled_for, created_at)
 VALUES
   ('Welcome Campaign', 'welcome_template', 'Customer', 'draft', 1, NOW() + INTERVAL '1 day', NOW()),
   ('Special Offer', 'special_offer_template', 'VIP', 'draft', 1, NOW() + INTERVAL '2 days', NOW())

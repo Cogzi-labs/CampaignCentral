@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
   contact_label TEXT,
   status TEXT NOT NULL DEFAULT 'draft',
   account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-  scheduled_at TIMESTAMP,
+  scheduled_for TIMESTAMP,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_campaigns_account_id ON campaigns(account_id);
@@ -120,7 +120,7 @@ VALUES
   ('Bob Johnson', '5552223333', 'Chicago', 'Lead', 1, NOW())
 ON CONFLICT DO NOTHING;
 
-INSERT INTO campaigns (name, template, contact_label, status, account_id, scheduled_at, created_at)
+INSERT INTO campaigns (name, template, contact_label, status, account_id, scheduled_for, created_at)
 VALUES
   ('Welcome Campaign', 'welcome_template', 'Customer', 'draft', 1, NOW() + INTERVAL '1 day', NOW()),
   ('Special Offer', 'special_offer_template', 'VIP', 'draft', 1, NOW() + INTERVAL '2 days', NOW())
