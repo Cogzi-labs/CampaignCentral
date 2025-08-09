@@ -85,9 +85,9 @@ jobs:
               pm2 restart reach-app
             fi
 
-            # Cleanup: keep only last 3 releases, delete older ones
+            # Cleanup: keep only last 2 releases, delete older ones
             cd $RELEASE_DIR
-            ls -1tr | head -n -3 | xargs -r rm -rf --
+            ls -1tr | head -n -2 | xargs -r rm -rf --
 
   rollback:
     runs-on: ubuntu-latest
